@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blue Buddies - Group 19 | BOSS 3D Glassmorphism</title>
+    
+    <!-- Fonts: Roboto & Roboto Black -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Roboto', 'sans-serif'],
+                        black: ['Roboto', 'sans-serif'],
+                    },
+                    colors: {
+                        'brand-blue': '#007AFF',
+                        'brand-cyan': '#00F0FF',
+                        'brand-red': '#FF3B30',
+                        'text-main': '#4A4A4A',
+                        'text-title': '#1A1A1A',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 1. BACKGROUND & BASE */
+        body {
+            background-color: #FFFFFF;
+            color: #4A4A4A;
+            overflow-x: hidden;
+            font-family: 'Roboto', sans-serif;
+            position: relative;
+        }
+
+        /* 2. TYPOGRAPHY */
+        h1, h2, h3, h4, .title-black {
+            font-weight: 900;
+            color: #1A1A1A;
+            letter-spacing: -0.02em;
+        }
+
+        /* 3. STRICT GLASSMORPHISM SPECIFICATION */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(16px) saturate(120%);
+            -webkit-backdrop-filter: blur(16px) saturate(120%);
+            border-top: 1px solid rgba(255, 255, 255, 0.8);
+            border-left: 1px solid rgba(255, 255, 255, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+            border-radius: 24px;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease, border-color 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .glass-card:not(.no-hover):hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 50px rgba(0, 0, 0, 0.08);
+        }
+
+        /* 4. LEVITATING / FLOATING ANIMATION */
+        .levitate {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-12px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .bg-gradient-text {
+            background: linear-gradient(135deg, #0052CC 0%, #4C9AFF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Ambient background decorative elements */
+        .ambient-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Custom Scrollbar for horizontal scrolling panels */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+        /* Hide scrollbar but keep functionality for nav */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Ambient Lights -->
+    <div class="ambient-orb bg-blue-500 w-96 h-96 top-20 left-10"></div>
+    <div class="ambient-orb bg-cyan-400 w-80 h-80 top-1/2 right-10"></div>
+    <div class="ambient-orb bg-red-400 w-72 h-72 bottom-20 left-1/3"></div>
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // ==========================================
+        // 3D MINIMALISM LOGOS (SVG)
+        // ==========================================
+        const BlueBuddiesLogo = ({ className = "w-16 h-16" }) => (
+            <svg className={className} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <radialGradient id="berryCore" cx="40%" cy="30%" r="60%">
+                        <stop offset="0%" stopColor="#4C9AFF" />
+                        <stop offset="50%" stopColor="#0052CC" />
+                        <stop offset="100%" stopColor="#002266" />
+                    </radialGradient>
+                    <linearGradient id="glassHighlight" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="white" stopOpacity="0.8"/>
+                        <stop offset="100%" stopColor="white" stopOpacity="0"/>
+                    </linearGradient>
+                </defs>
+                <circle cx="50" cy="55" r="38" fill="url(#berryCore)" style={{filter: 'drop-shadow(0px 10px 15px rgba(0,82,204,0.3))'}}/>
+                <ellipse cx="40" cy="35" rx="15" ry="10" transform="rotate(-30 40 35)" fill="url(#glassHighlight)"/>
+                <path d="M45 25 Q50 10 70 15" stroke="#00A859" strokeWidth="3" strokeLinecap="round" fill="none"/>
+                <path d="M50 20 Q65 10 80 15" stroke="#00A859" strokeWidth="2" strokeLinecap="round" fill="none"/>
+            </svg>
+        );
+
+        const ShinyAppleLogo = ({ className = "w-16 h-16" }) => (
+            <svg className={className} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="chromeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#FFFFFF" />
+                        <stop offset="30%" stopColor="#D1D1D6" />
+                        <stop offset="50%" stopColor="#8E8E93" />
+                        <stop offset="70%" stopColor="#FFFFFF" />
+                        <stop offset="100%" stopColor="#3A3A3C" />
+                    </linearGradient>
+                </defs>
+                <path d="M50 85 C25 85 10 65 20 40 C25 25 40 25 50 35 C60 25 75 25 80 40 C90 65 75 85 50 85Z" fill="url(#chromeGrad)" style={{filter: 'drop-shadow(0px 10px 15px rgba(0,0,0,0.2))'}}/>
+                <path d="M50 30 Q55 10 70 15" stroke="#8E8E93" strokeWidth="3" strokeLinecap="round" fill="none"/>
+            </svg>
+        );
+
+        const PurplePlumLogo = ({ className = "w-16 h-16" }) => (
+            <svg className={className} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <radialGradient id="plumGrad" cx="30%" cy="30%" r="70%">
+                        <stop offset="0%" stopColor="#E879F9" />
+                        <stop offset="50%" stopColor="#A855F7" />
+                        <stop offset="100%" stopColor="#581C87" />
+                    </radialGradient>
+                    <filter id="frosted">
+                        <feGaussianBlur stdDeviation="1.5" result="blur" />
+                        <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+                    </filter>
+                </defs>
+                <circle cx="50" cy="55" r="35" fill="url(#plumGrad)" filter="url(#frosted)" style={{filter: 'drop-shadow(0px 10px 15px rgba(168,85,247,0.3))'}}/>
+                <path d="M50 22 C50 22 65 5 75 12" stroke="#22C55E" strokeWidth="3" strokeLinecap="round" fill="none"/>
+                <ellipse cx="35" cy="40" rx="8" ry="12" transform="rotate(-45 35 40)" fill="white" opacity="0.3" filter="url(#frosted)"/>
+            </svg>
+        );
+
+        const YellowBananaLogo = ({ className = "w-16 h-16" }) => (
+            <svg className={className} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="bananaGrad" x1="10%" y1="0%" x2="90%" y2="100%">
+                        <stop offset="0%" stopColor="#FEF08A" />
+                        <stop offset="40%" stopColor="#FACC15" />
+                        <stop offset="100%" stopColor="#A16207" />
+                    </linearGradient>
+                </defs>
+                <path d="M20 20 Q30 90 85 80 Q60 55 85 20 Q40 60 20 20Z" fill="url(#bananaGrad)" style={{filter: 'drop-shadow(0px 10px 15px rgba(250,204,21,0.3))'}}/>
+                <path d="M25 25 Q35 80 80 75" stroke="#FFFFFF" strokeWidth="2" fill="none" opacity="0.6" strokeLinecap="round"/>
+            </svg>
+        );
+
+        // ==========================================
+        // PRODUCT BOXES DESIGNS
+        // ==========================================
+        const RedBoxModel = () => (
+            <div className="w-20 h-20 bg-[#2C2C2E] rounded-md relative shadow-[10px_10px_0px_rgba(0,0,0,0.1)] border-4 border-[#8E8E93] flex flex-col items-center justify-center transform hover:scale-105 transition-transform">
+                <div className="w-full h-1/3 bg-[#1C1C1E] absolute top-0 rounded-t-sm"></div>
+                <div className="absolute top-2 left-2 w-4 h-4 bg-[#FF3B30] rounded-sm shadow-[inset_1px_1px_2px_rgba(255,255,255,0.4),_2px_2px_4px_rgba(0,0,0,0.5)]"></div>
+                <div className="absolute top-2 right-2 w-4 h-4 bg-[#FF3B30] rounded-sm shadow-[inset_1px_1px_2px_rgba(255,255,255,0.4),_2px_2px_4px_rgba(0,0,0,0.5)]"></div>
+                <div className="w-10 h-10 mt-4 rounded-full bg-gradient-to-br from-[#FF6961] to-[#FF3B30] shadow-[inset_-2px_-2px_6px_rgba(0,0,0,0.4)] flex items-center justify-center">
+                    <div className="w-4 h-4 rounded-full bg-black/50"></div>
+                </div>
+            </div>
+        );
+
+        const BlueBoxModel = () => (
+            <div className="levitate w-20 h-20 rounded-full relative flex items-center justify-center backdrop-blur-xl bg-white/10 border border-white/60" style={{boxShadow: '0 15px 25px rgba(0, 240, 255, 0.2), inset 0 0 15px rgba(0, 240, 255, 0.4)'}}>
+                <div className="absolute w-8 h-8 rounded-full bg-[#00F0FF] blur-md opacity-70 animate-pulse"></div>
+                <div className="absolute w-12 h-[2px] bg-white/80 rounded-full top-1/2 transform -translate-y-1/2 shadow-[0_0_8px_#00F0FF]"></div>
+            </div>
+        );
+
+
+        // ==========================================
+        // DATA DICTIONARY (WITH Y40 MILESTONE)
+        // ==========================================
+        const METRIC_DATA = {
+            labels: ['Y40 (Initial)', 'Y41', 'Y42', 'Y43', 'Y44', 'Y45', 'Y46', 'Y47', 'Y48', 'Y49'],
+            spi: [1000, 950, 735, 623, 809, 864, 811, 793, 982, 1156],
+            marketShare: [22, 21, 14, 12, 15, 19, 20, 20, 27, 40.4],
+            ebit: [366, 352, 254, 152, 132, 155, 155, 158, 289, 401],
+            revenue: [926, 903, 617, 500, 773, 878, 900, 945, 1355, 1758]
+        };
+
+        const COMPETITOR_DATA = {
+            'Y40': [22, 33, 28, 17],
+            'Y41': [21, 35, 29, 15],
+            'Y43': [12, 45, 35, 8],
+            'Y44': [15, 42, 33, 10],
+            'Y45': [19, 38, 28, 15],
+            'Y46': [20, 36, 26, 18],
+            'Y47': [20, 32, 24, 24],
+            'Y48': [27, 25, 23, 25],
+            'Y49': [40.4, 18, 18.6, 23]
+        };
+
+        const ROUND_INDICES = {
+            intro: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], // Y40 to Y49
+            red: [0, 1, 2, 3],                     // Y40 to Y43
+            blue1: [0, 1, 2, 3, 4],                // Y40 to Y44
+            blue2: [0, 1, 2, 3, 4, 5, 6],          // Y40 to Y46
+            blue3: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]  // Y40 to Y49
+        };
+
+        // ==========================================
+        // UI COMPONENTS
+        // ==========================================
+        const ChartComponent = ({ type, data, options, id }) => {
+            const chartRef = useRef(null);
+            const chartInstance = useRef(null);
+
+            useEffect(() => {
+                if (chartInstance.current) chartInstance.current.destroy();
+                const ctx = chartRef.current.getContext('2d');
+                chartInstance.current = new Chart(ctx, {
+                    type: type,
+                    data: data,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { 
+                                position: 'bottom', 
+                                labels: { 
+                                    font: { family: 'Roboto', size: 11 }, 
+                                    color: '#4A4A4A',
+                                    boxWidth: 12,
+                                    padding: 10
+                                } 
+                            } 
+                        },
+                        scales: type !== 'pie' ? {
+                            y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { color: '#4A4A4A' }, beginAtZero: false },
+                            x: { grid: { display: false }, ticks: { color: '#4A4A4A' } }
+                        } : {},
+                        layout: type === 'pie' ? { padding: { bottom: 10 } } : {},
+                        ...options
+                    }
+                });
+                return () => { if (chartInstance.current) chartInstance.current.destroy(); };
+            }, [data, type, options]);
+
+            return <div className="w-full h-full min-h-[250px]"><canvas ref={chartRef} id={id}></canvas></div>;
+        };
+
+        const MetricCard = ({ title, value, subtext, trend, isPositive, onClick, colorTheme }) => {
+            const isClickable = !!onClick;
+            const ringColor = colorTheme || '#007AFF';
+            
+            return (
+                <div 
+                    className={`glass-card p-6 flex flex-col justify-between h-full transition-all duration-300 ${isClickable ? 'cursor-pointer group' : 'no-hover'}`}
+                    onClick={onClick}
+                    style={isClickable ? { '--tw-ring-color': ringColor } : {}}
+                >
+                    {isClickable && <div className={`absolute inset-0 border-2 border-transparent group-hover:border-[${ringColor}] rounded-24px transition-colors duration-300 pointer-events-none rounded-3xl opacity-50`}></div>}
+                    <div className="flex justify-between items-start">
+                        <h3 className="text-sm font-medium text-text-main uppercase tracking-wider">{title}</h3>
+                        {isClickable && (
+                            <div className="bg-white/50 p-1.5 rounded-lg shadow-sm group-hover:shadow-md transition-all">
+                                <svg className="w-4 h-4 text-gray-500 group-hover:text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                            </div>
+                        )}
+                    </div>
+                    <div className="mt-3 flex items-baseline gap-2 relative z-10">
+                        <span className="text-4xl title-black text-text-title">{value}</span>
+                        {trend && (
+                            <span className={`text-sm font-bold ${isPositive ? 'text-[#34C759]' : 'text-[#FF3B30]'}`}>
+                                {isPositive ? '▲' : '▼'} {trend}
+                            </span>
+                        )}
+                    </div>
+                    {subtext && <p className="text-xs text-text-main opacity-70 mt-2 relative z-10">{subtext}</p>}
+                </div>
+            );
+        };
+
+        const DataTable = ({ columns, data, highlightCol }) => (
+            <div className="overflow-x-auto w-full rounded-2xl glass-card no-hover">
+                <table className="w-full text-sm text-left">
+                    <thead className="bg-white/30 text-text-title font-black uppercase text-xs tracking-wider border-b border-white/50">
+                        <tr>
+                            {columns.map((col, idx) => (
+                                <th key={idx} className="px-5 py-4 whitespace-nowrap">{col}</th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/20">
+                        {data.map((row, rIdx) => (
+                            <tr key={rIdx} className="hover:bg-white/30 transition-colors">
+                                {row.map((cell, cIdx) => (
+                                    <td key={cIdx} className={`px-5 py-4 ${cIdx === highlightCol ? 'font-bold text-[#007AFF] bg-[#007AFF]/5' : 'text-text-main'}`}>
+                                        {cell}
+                                    </td>
+                                ))}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        );
+
+        const SectionHeader = ({ title, subtitle }) => (
+            <div className="mb-6">
+                <h2 className="text-3xl title-black text-text-title">{title}</h2>
+                {subtitle && <p className="text-text-main mt-2 font-medium">{subtitle}</p>}
+            </div>
+        );
+
+        // ==========================================
+        // MODAL COMPONENT
+        // ==========================================
+        const ChartModal = ({ isOpen, onClose, data }) => {
+            if (!isOpen || !data) return null;
+
+            const chartConfig = {
+                labels: data.labels,
+                datasets: [{
+                    label: data.title,
+                    data: data.values,
+                    backgroundColor: data.color || '#007AFF',
+                    borderRadius: 6,
+                    borderWidth: 1,
+                    borderColor: 'rgba(255,255,255,0.5)',
+                }]
+            };
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+                    {/* Glass Backdrop */}
+                    <div className="absolute inset-0 bg-white/20 backdrop-blur-md transition-opacity" onClick={onClose}></div>
+                    
+                    {/* Modal Content */}
+                    <div className="glass-card no-hover relative z-10 w-full max-w-4xl p-6 sm:p-10 shadow-[0_40px_80px_rgba(0,0,0,0.15)] animate-[fadeIn_0.3s_ease-out]">
+                        <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-white/50 rounded-full text-gray-600 hover:text-black hover:bg-white transition-colors">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                        
+                        <div className="mb-6">
+                            <h2 className="text-2xl title-black text-text-title">{data.title}</h2>
+                            <p className="text-text-main mt-1 text-sm">Tracking from Initial Milestone (Y40) to End of Stage</p>
+                        </div>
+                        
+                        <div className="h-80 w-full bg-white/30 rounded-xl p-4 border border-white/50">
+                            <ChartComponent type="bar" data={chartConfig} id="popupChart" />
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // ==========================================
+        // PART 3 COMPONENT (MARKET SHARE & TRENDS)
+        // ==========================================
+        const PerformanceSection = ({ pieYears, lineIndices, sectionId }) => {
+            const getPieData = (yearLabel) => {
+                const data = COMPETITOR_DATA[yearLabel] || [25, 25, 25, 25];
+                return {
+                    labels: [
+                        `Blue Buddies (${data[0]}%)`, 
+                        `Shiny Apple (${data[1]}%)`, 
+                        `Purple Plum (${data[2]}%)`, 
+                        `Yellow Bananas (${data[3]}%)`
+                    ],
+                    datasets: [{
+                        data: data,
+                        backgroundColor: ['#007AFF', '#8E8E93', '#A855F7', '#FACC15'],
+                        borderWidth: 0
+                    }]
+                };
+            };
+
+            const getLineData = (metricKey, label, color) => ({
+                labels: lineIndices.map(i => METRIC_DATA.labels[i]),
+                datasets: [{
+                    label: label,
+                    data: lineIndices.map(i => METRIC_DATA[metricKey][i]),
+                    borderColor: color,
+                    backgroundColor: `${color}1A`,
+                    borderWidth: 3, fill: true, tension: 0.4,
+                    pointBackgroundColor: '#FFFFFF', pointBorderColor: color
+                }]
+            });
+
+            return (
+                <div className="mt-12 animate-[fadeIn_0.5s_ease-out] border-t border-gray-200/50 pt-10">
+                    <SectionHeader title="Part 3: Market Share & Financial Trends" subtitle="Comparing Y40 vs. Stage Timeline" />
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                        {pieYears.map((year, idx) => (
+                            <div key={idx} className="glass-card no-hover p-6 flex flex-col items-center">
+                                <h4 className="title-black text-center mb-4">{year} Market Share</h4>
+                                <div className="w-full h-64 relative">
+                                    <ChartComponent type="pie" data={getPieData(year)} id={`pie-${sectionId}-${idx}`} />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="glass-card no-hover p-6">
+                            <h4 className="title-black mb-4 text-[#007AFF]">Share Price Index (SPI)</h4>
+                            <div className="h-56">
+                                <ChartComponent type="line" data={getLineData('spi', 'SPI', '#007AFF')} id={`line-spi-${sectionId}`} />
+                            </div>
+                        </div>
+                        <div className="glass-card no-hover p-6">
+                            <h4 className="title-black mb-4 text-[#A855F7]">Market Share (%)</h4>
+                            <div className="h-56">
+                                <ChartComponent type="line" data={getLineData('marketShare', 'Market Share (%)', '#A855F7')} id={`line-ms-${sectionId}`} />
+                            </div>
+                        </div>
+                        <div className="glass-card no-hover p-6">
+                            <h4 className="title-black mb-4 text-[#FACC15]">Revenue ($M)</h4>
+                            <div className="h-56">
+                                <ChartComponent type="line" data={getLineData('revenue', 'Revenue ($M)', '#FACC15')} id={`line-rev-${sectionId}`} />
+                            </div>
+                        </div>
+                        <div className="glass-card no-hover p-6">
+                            <h4 className="title-black mb-4 text-[#34C759]">Total EBIT ($M)</h4>
+                            <div className="h-56">
+                                <ChartComponent type="line" data={getLineData('ebit', 'Total EBIT ($M)', '#34C759')} id={`line-ebit-${sectionId}`} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // ==========================================
+        // VIEWS
+        // ==========================================
+        
+        const IntroView = ({ onOpenChart }) => (
+            <div className="space-y-10 animate-[fadeIn_0.5s_ease-out] relative">
+                <div className="absolute top-0 right-0 opacity-10 pointer-events-none levitate" style={{filter: 'blur(10px)', transform: 'scale(3)'}}>
+                    <BlueBuddiesLogo className="w-64 h-64" />
+                </div>
+
+                <div className="glass-card no-hover p-10 text-center relative z-10">
+                    <h1 className="text-5xl title-black bg-gradient-text mb-4">BLUE OCEAN STRATEGY SIMULATION</h1>
+                    <p className="text-xl text-text-main">A 9-Year Journey from Red Ocean Survival to Blue Ocean Dominance.</p>
+                </div>
+
+                <SectionHeader title="The Big Four Competitors" subtitle="Context of the Industry" />
+                
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative z-10">
+                    <div className="glass-card no-hover p-6 flex flex-col items-center text-center">
+                        <div className="levitate mb-4"><BlueBuddiesLogo/></div>
+                        <h3 className="title-black text-lg mb-2">Blue Buddies</h3>
+                        <p className="text-sm text-text-main">Player Team. Transitioning from Red Box (Legacy) to Blue Box (Future).</p>
+                    </div>
+                    <div className="glass-card no-hover p-6 flex flex-col items-center text-center">
+                        <div className="levitate mb-4" style={{animationDelay: '1s'}}><ShinyAppleLogo/></div>
+                        <h3 className="title-black text-lg mb-2">Shiny Apple</h3>
+                        <p className="text-sm text-text-main">Shiny Station. Premium hardware, dominating the older segment.</p>
+                    </div>
+                    <div className="glass-card no-hover p-6 flex flex-col items-center text-center">
+                        <div className="levitate mb-4" style={{animationDelay: '2s'}}><PurplePlumLogo/></div>
+                        <h3 className="title-black text-lg mb-2">Purple Plum</h3>
+                        <p className="text-sm text-text-main">Purple Player. Aggressive dominance in young adult market (22-35).</p>
+                    </div>
+                    <div className="glass-card no-hover p-6 flex flex-col items-center text-center">
+                        <div className="levitate mb-4" style={{animationDelay: '3s'}}><YellowBananaLogo/></div>
+                        <h3 className="title-black text-lg mb-2">Yellow Bananas</h3>
+                        <p className="text-sm text-text-main">Yellow Console. Strong mass-market presence with high online capabilities.</p>
+                    </div>
+                </div>
+
+                <div className="glass-card no-hover p-8 cursor-pointer hover:ring-2 hover:ring-[#007AFF] transition-all group" onClick={() => onOpenChart('spi', 'Complete SPI Journey (Y40-Y49)', ROUND_INDICES.intro, '#007AFF')}>
+                    <div className="flex justify-between items-center mb-4">
+                        <SectionHeader title="Performance Overview (SPI)" subtitle="Click to view detailed Bar Chart" />
+                        <div className="bg-white/50 p-2 rounded-lg group-hover:bg-white transition-all">
+                            <svg className="w-5 h-5 text-gray-500 group-hover:text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                        </div>
+                    </div>
+                    <ChartComponent type="line" data={{
+                        labels: METRIC_DATA.labels,
+                        datasets: [{
+                            label: 'Share Price Index (SPI)',
+                            data: METRIC_DATA.spi,
+                            borderColor: '#007AFF',
+                            backgroundColor: 'rgba(0, 122, 255, 0.1)',
+                            borderWidth: 3, fill: true, tension: 0.4,
+                            pointBackgroundColor: '#FFFFFF', pointBorderColor: '#007AFF'
+                        }]
+                    }} id="introSpi" />
+                </div>
+            </div>
+        );
+
+        const RedRoundView = ({ onOpenChart }) => (
+            <div className="space-y-8 animate-[fadeIn_0.5s_ease-out]">
+                <div className="flex items-center gap-6 mb-8">
+                    <RedBoxModel />
+                    <div>
+                        <h2 className="text-4xl title-black text-[#FF3B30]">RED ROUND (Y41 - Y43)</h2>
+                        <p className="text-text-main font-medium mt-1">Defending the core, preparing for the leap.</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <MetricCard title="SPI Drop" value="623" subtext="From 1000 in Y40" trend="-37.7%" isPositive={false} colorTheme="#FF3B30"
+                        onClick={() => onOpenChart('spi', 'SPI Trend (Red Round Y40-Y43)', ROUND_INDICES.red, '#FF3B30')} />
+                    
+                    <MetricCard title="Market Share" value="12%" subtext="Lost to Purple/Shiny" trend="-9%" isPositive={false} colorTheme="#A855F7"
+                        onClick={() => onOpenChart('marketShare', 'Market Share % (Red Round Y40-Y43)', ROUND_INDICES.red, '#A855F7')} />
+                    
+                    <MetricCard title="EBIT (Y43)" value="$152M" subtext="Margin compression" trend="-58%" isPositive={false} colorTheme="#34C759"
+                        onClick={() => onOpenChart('ebit', 'EBIT Trend (Red Round Y40-Y43)', ROUND_INDICES.red, '#34C759')} />
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="glass-card no-hover p-8 border-l-4 border-l-[#FF3B30]">
+                        <h3 className="title-black text-xl mb-4">Part 1: Context & Business Status</h3>
+                        <p className="text-sm text-text-main mb-3"><b className="title-black">Macro:</b> Mature, declining red ocean. Budget strictly constrained (~$210M).</p>
+                        <p className="text-sm text-text-main mb-3"><b className="title-black">Competitors:</b> Shiny Apple rules 36+. Purple Plum aggressively took 22-35.</p>
+                        <p className="text-sm text-text-main"><b className="title-black">Strategy:</b> Protect profit margins. Treat Red Box as a Cash Cow to fund R&D for the upcoming Blue Box launch.</p>
+                    </div>
+                    
+                    <div className="glass-card no-hover p-8 bg-red-50/10">
+                        <h3 className="title-black text-xl mb-4 text-[#FF3B30]">Outcomes & Learning</h3>
+                        <ul className="space-y-2 text-sm text-text-main">
+                            <li><b className="title-black">Mismatch:</b> Targeted 36+ but cut Graphics/Audio. Result: Customers rejected it.</li>
+                            <li><b className="title-black">Input Error:</b> Typed $10M marketing instead of $100M. Lost total visibility.</li>
+                            <li><b className="title-black">Overproduction:</b> Over-estimated demand. Huge inventory penalty ($25M total).</li>
+                            <li className="mt-4 pt-3 border-t border-red-200/50"><b className="text-text-title">Lesson 1:</b> Price & Product must align perfectly with the chosen segment's desires.</li>
+                            <li><b className="text-text-title">Lesson 2:</b> Produce based on real demand, not past history.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div className="mt-8">
+                    <SectionHeader title="Part 2: Decision Making & Rationale" subtitle="Key changes Y42 to Y43" />
+                    <DataTable 
+                        columns={["Factor", "Y42 Decision", "Y43 Decision", "Action", "Strategic Rationale (Why?)"]}
+                        highlightCol={3}
+                        data={[
+                            ["Target Segment", "36+ (45%)", "22-35 (65%)", "Pivot", "Attempted to escape Shiny Station by chasing younger market, but hit Purple Player instead."],
+                            ["Price", "$399", "$379", "Reduce", "Slight reduction to stimulate demand, insufficient to offset weak features."],
+                            ["Marketing", "$50M", "$10M", "Fatal Cut", "Input error. Intended $100M. Catastrophic loss of market share."],
+                            ["Production", "2,300 KU", "2,100 KU", "Cut", "Failed to adjust low enough for dropping demand, causing inventory build-up."],
+                            ["R&D (Online)", "Level 20", "Level 70", "Raise", "Raised features but didn't match the new 22-35 segment precisely."]
+                        ]}
+                    />
+                </div>
+
+                <PerformanceSection pieYears={['Y40', 'Y41', 'Y43']} lineIndices={ROUND_INDICES.red} sectionId="red" />
+            </div>
+        );
+
+        const Blue1View = ({ onOpenChart }) => (
+            <div className="space-y-8 animate-[fadeIn_0.5s_ease-out]">
+                <div className="flex items-center justify-between glass-card no-hover p-6 mb-8 bg-gradient-to-r from-white/20 to-blue-50/30">
+                    <div className="flex items-center gap-4 opacity-50 grayscale"><RedBoxModel/><span className="title-black text-sm">Legacy</span></div>
+                    <div className="flex-1 px-8 text-center"><div className="h-1 bg-gradient-to-r from-gray-300 to-[#00F0FF] relative"><div className="absolute right-0 -top-2 w-0 h-0 border-t-8 border-b-8 border-l-8 border-transparent border-l-[#00F0FF]"></div></div></div>
+                    <div className="flex items-center gap-4"><div className="levitate"><BlueBoxModel/></div><span className="title-black text-lg text-[#007AFF]">The Future</span></div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <MetricCard title="SPI Rebound" value="809" subtext="Massive recovery" trend="+186" isPositive={true} colorTheme="#007AFF"
+                        onClick={() => onOpenChart('spi', 'SPI Trend (Blue R1 Y40-Y44)', ROUND_INDICES.blue1, '#007AFF')} />
+                    
+                    <MetricCard title="Market Share" value="15%" subtext="Red & Blue combined" trend="+3%" isPositive={true} colorTheme="#A855F7"
+                        onClick={() => onOpenChart('marketShare', 'Market Share % (Blue R1 Y40-Y44)', ROUND_INDICES.blue1, '#A855F7')} />
+                    
+                    <MetricCard title="Total EBIT" value="$132M" subtext="Absorbed launch costs" trend="-13%" isPositive={false} colorTheme="#34C759"
+                        onClick={() => onOpenChart('ebit', 'Total EBIT Trend (Blue R1 Y40-Y44)', ROUND_INDICES.blue1, '#34C759')} />
+                    
+                    <MetricCard title="Revenues" value="$773M" subtext="Growth resumes" trend="+54.6%" isPositive={true} colorTheme="#FACC15"
+                        onClick={() => onOpenChart('revenue', 'Revenues Trend (Blue R1 Y40-Y44)', ROUND_INDICES.blue1, '#FACC15')} />
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="glass-card no-hover p-8 border-l-4 border-l-[#007AFF]">
+                        <h3 className="title-black text-xl mb-4">Part 1: Context & Strategy</h3>
+                        <p className="text-sm text-text-main mb-3"><b className="title-black">Status:</b> Red Box fading. Time to execute Value Innovation (ERRC).</p>
+                        <p className="text-sm text-text-main mb-4"><b className="title-black">Target:</b> Non-customers: Path 3 (Parents) & Path 5 (Social Adults).</p>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="p-4 bg-white/50 rounded-xl"><b className="title-black">Eliminate/Reduce:</b><br/>Graphics, Audio, Console Power</div>
+                            <div className="p-4 bg-white/50 rounded-xl"><b className="title-black">Raise/Create:</b><br/>Ease of Use, Family/Social</div>
+                        </div>
+                    </div>
+                    
+                    <div className="glass-card no-hover p-8 bg-blue-50/10">
+                        <h3 className="title-black text-xl mb-4 text-[#007AFF]">Outcomes & Learning</h3>
+                        <ul className="space-y-2 text-sm text-text-main">
+                            <li><b className="title-black">Validation:</b> Non-customers enthusiastically adopted Blue Box. SPI trend reversed.</li>
+                            <li><b className="title-black">Cost Control:</b> Corporate projects (A, B, D, J) successfully cut unit cost to $127.</li>
+                            <li><b className="title-black">Issue:</b> Planned 900 KU, sold 345 KU. Penalty: $7.5M.</li>
+                            <li className="mt-4 pt-3 border-t border-blue-200/50"><b className="text-text-title">Lesson:</b> Blue Ocean requires a year to "gồng lỗ" (absorb costs) to shape the market. </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div className="mt-8">
+                    <SectionHeader title="Part 2: Decision Making (Y44 Launch)" subtitle="Executing the ERRC Grid" />
+                    <DataTable 
+                        columns={["Parameter", "Input Value", "ERRC Action", "Strategic Rationale"]}
+                        highlightCol={2}
+                        data={[
+                            ["Price", "$299", "Strategic Pricing", "Set low to unlock mass non-customer demand and overcome adoption hurdles."],
+                            ["Graphics / Audio / Power", "Level 1 or 2", "REDUCE", "Target segments (Parents) do not value hardcore specs. Slashing this drastically lowers Base Unit Cost."],
+                            ["Ease of Use", "Level 5 (Max)", "RAISE", "Critical for non-gamers. Must be plug-and-play without frustration."],
+                            ["Family / Social", "Level 5 (Max)", "CREATE", "Shift focus from solitary dark-room gaming to living room social experiences."],
+                            ["Corp. Projects", "A, B, J", "Enablement", "Activate Manufacturing Relocation & Six Sigma to ensure profitability at the low $299 price point."]
+                        ]}
+                    />
+                </div>
+
+                <PerformanceSection pieYears={['Y40', 'Y43', 'Y44']} lineIndices={ROUND_INDICES.blue1} sectionId="b1" />
+            </div>
+        );
+
+        const Blue2View = ({ onOpenChart }) => (
+            <div className="space-y-8 animate-[fadeIn_0.5s_ease-out]">
+                 <div className="flex items-center gap-6 mb-8">
+                    <div className="levitate"><BlueBoxModel /></div>
+                    <div>
+                        <h2 className="text-4xl title-black text-[#00F0FF]">BLUE ROUND 2 (Y45 - Y46)</h2>
+                        <p className="text-text-main font-medium mt-1">Scaling and commercialization.</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <MetricCard title="Revenues" value="$900M" subtext="Growth accelerating" trend="+2%" isPositive={true} colorTheme="#FACC15"
+                        onClick={() => onOpenChart('revenue', 'Revenues Trend (Blue R2 Y40-Y46)', ROUND_INDICES.blue2, '#FACC15')} />
+                    
+                    <MetricCard title="EBIT (Y46)" value="$155M" subtext="Recovering profitability" trend="+0%" isPositive={true} colorTheme="#34C759"
+                        onClick={() => onOpenChart('ebit', 'EBIT Trend (Blue R2 Y40-Y46)', ROUND_INDICES.blue2, '#34C759')} />
+                    
+                    <MetricCard title="Market Share" value="20%" subtext="Units capture" trend="+1%" isPositive={true} colorTheme="#A855F7"
+                        onClick={() => onOpenChart('marketShare', 'Market Share % (Blue R2 Y40-Y46)', ROUND_INDICES.blue2, '#A855F7')} />
+                    
+                    <MetricCard title="SPI" value="811" subtext="Imitators entered" trend="-53" isPositive={false} colorTheme="#007AFF"
+                        onClick={() => onOpenChart('spi', 'SPI Trend (Blue R2 Y40-Y46)', ROUND_INDICES.blue2, '#007AFF')} />
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="glass-card no-hover p-8 border-l-4 border-l-[#00F0FF]">
+                        <h3 className="title-black text-xl mb-4">Part 1: Volume Growth Overview</h3>
+                        <div className="h-64 w-full relative">
+                            <ChartComponent 
+                                type="bar" 
+                                data={{
+                                    labels: ['Y44 (Launch)', 'Y45', 'Y46'],
+                                    datasets: [{ label: 'Blue Box Volume (KU)', data: [345, 1013, 1359], backgroundColor: '#00F0FF', borderRadius: 4 }]
+                                }} 
+                                id="volB2" 
+                            />
+                        </div>
+                    </div>
+                    
+                    <div className="glass-card no-hover p-8 bg-cyan-50/10">
+                        <h3 className="title-black text-xl mb-4 text-[#00F0FF]">Context & Outcomes</h3>
+                        <ul className="space-y-2 text-sm text-text-main">
+                            <li><b className="title-black">Status:</b> Product validated. Focus shifts to market capture before imitators scale.</li>
+                            <li><b className="title-black">Competitors:</b> Shiny & Yellow Bananas launch Blue copycats, causing temporary SPI dip.</li>
+                            <li><b className="title-black">Outcome:</b> Survived entry by aggressively dropping price and expanding geographic reach (Starland).</li>
+                            <li className="mt-4 pt-3 border-t border-cyan-200/50"><b className="text-text-title">Lesson:</b> Right price unlocks demand faster than adding features. Shift budget decisively to Marketing/Sales once product is ready.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div className="mt-8">
+                    <SectionHeader title="Part 2: Decision Making (Refining the Offering)" subtitle="Y45 to Y46" />
+                    <DataTable 
+                        columns={["Parameter", "Y45", "Y46", "Action", "Strategic Rationale"]}
+                        highlightCol={3}
+                        data={[
+                            ["Price", "$299", "$269", "REDUCE", "Simulation flagged 'price too high'. Lowering price triggered mass adoption and blocked copycats."],
+                            ["Starland Coverage", "10%", "40%", "RAISE", "Geographical expansion is critical to capture the ocean globally."],
+                            ["Unnecessary Features", "Mid", "Level 1", "ELIMINATE", "Cut 'Space-saving' and others that don't drive value for Path 3/5 to protect margins."],
+                            ["Production Plan", "650 KU", "1,500+ KU", "Scale Up", "Aligning production closer to actual soaring demand to avoid stockouts."]
+                        ]}
+                    />
+                </div>
+
+                <PerformanceSection pieYears={['Y40', 'Y44', 'Y46']} lineIndices={ROUND_INDICES.blue2} sectionId="b2" />
+            </div>
+        );
+
+        const Blue3View = ({ onOpenChart }) => (
+            <div className="space-y-8 animate-[fadeIn_0.5s_ease-out]">
+                 <div className="flex items-center gap-6 mb-8">
+                    <div className="levitate"><BlueBoxModel /></div>
+                    <div>
+                        <h2 className="text-4xl title-black bg-gradient-text">BLUE ROUND 3 (Y47 - Y49)</h2>
+                        <p className="text-text-main font-medium mt-1">Market Dominance via Service & Delivery.</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <MetricCard title="SPI Final" value="1,156" subtext="Market Leader" trend="+363" isPositive={true} colorTheme="#007AFF"
+                        onClick={() => onOpenChart('spi', 'Final SPI Trend (Y40-Y49)', ROUND_INDICES.blue3, '#007AFF')} />
+                    
+                    <MetricCard title="Market Share" value="40.4%" subtext="Dominant position" trend="+13%" isPositive={true} colorTheme="#A855F7"
+                        onClick={() => onOpenChart('marketShare', 'Market Share % (Y40-Y49)', ROUND_INDICES.blue3, '#A855F7')} />
+                    
+                    <MetricCard title="Revenues" value="$1.758B" subtext="Record High" trend="+86%" isPositive={true} colorTheme="#FACC15"
+                        onClick={() => onOpenChart('revenue', 'Revenues Trend (Y40-Y49)', ROUND_INDICES.blue3, '#FACC15')} />
+                    
+                    <MetricCard title="Total EBIT" value="$401M" subtext="Record Profit" trend="+153%" isPositive={true} colorTheme="#34C759"
+                        onClick={() => onOpenChart('ebit', 'Total EBIT Trend (Y40-Y49)', ROUND_INDICES.blue3, '#34C759')} />
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="glass-card no-hover p-8 border-l-4 border-l-[#0052CC]">
+                        <h3 className="title-black text-xl mb-4">Part 1: Context & Strategy</h3>
+                        <p className="text-sm text-text-main mb-4">
+                            <b className="title-black">Status:</b> Blue Ocean turning Red. Year 47 competitors successfully copied hardware. <br/>
+                            <b className="title-black">Action:</b> Shift from Product to <b className="title-black">Service and Delivery</b> (Path 4). Build an impenetrable moat.
+                        </p>
+                        <div className="h-64 w-full relative mt-4">
+                            <ChartComponent 
+                                type="pie" 
+                                data={{
+                                    labels: ['Blue Buddies (40.4%)', 'Shiny Apple (18%)', 'Purple Plum (18.6%)', 'Yellow Bananas (23%)'],
+                                    datasets: [{ data: [40.4, 18, 18.6, 23], backgroundColor: ['#007AFF', '#8E8E93', '#A855F7', '#FACC15'], borderWidth: 0 }]
+                                }} 
+                                id="msChart3" 
+                            />
+                        </div>
+                    </div>
+                    
+                    <div className="glass-card no-hover p-8 bg-blue-50/10">
+                        <h3 className="title-black text-xl mb-4 text-[#0052CC]">Outcomes & Learning</h3>
+                        <ul className="space-y-3 text-sm text-text-main">
+                            <li><b className="title-black">Absolute Dominance:</b> #1 unit market share (40.4%). SPI skyrocketed to 1,156.</li>
+                            <li><b className="title-black">Moat Built:</b> By investing in Service, competitors with only product-clones couldn't match the holistic customer experience.</li>
+                            <li><b className="title-black">Profit Machine:</b> Unit cost stabilized at $118 while volume hit 5.08M units. Total EBIT hit $401M.</li>
+                            <li className="mt-4 pt-3 border-t border-blue-200/50"><b className="text-text-title">Ultimate Lesson:</b> Blue Oceans are temporary. You must continuously innovate—moving from Product to Service/Delivery—to keep competitors irrelevant.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div className="mt-8">
+                    <SectionHeader title="Part 2: Decision Making" subtitle="Creating the Service Moat" />
+                    <DataTable 
+                        columns={["Parameter", "Y47-Y49 Decision", "Action", "Strategic Rationale"]}
+                        highlightCol={2}
+                        data={[
+                            ["Price", "$249", "Final Drop", "Pushed price to minimum threshold to maximize non-customer conversion and block new entrants."],
+                            ["Starland Coverage", "100%", "MAX", "Full global deployment. Capitalize on the developed market."],
+                            ["Corp. Project (N)", "Leadership & Service", "INVEST", "Radically upgrading customer contact center. Vital when selling to non-tech-savvy noncustomers."],
+                            ["Corp. Project (P)", "Expert Trainers", "INVEST", "Train retail staff. They must know how to sell a 'non-console' to a 'non-gamer'."],
+                            ["Production", "5,450 KU", "Match", "Finally aligned production scale precisely with marketing-driven demand. Minimal penalties."]
+                        ]}
+                    />
+                </div>
+
+                <PerformanceSection pieYears={['Y40', 'Y47', 'Y49']} lineIndices={ROUND_INDICES.blue3} sectionId="b3" />
+            </div>
+        );
+
+        // ==========================================
+        // NEW TAB: CONCLUSION / KEY TAKEAWAYS
+        // ==========================================
+        const ConclusionView = () => (
+            <div className="space-y-8 animate-[fadeIn_0.5s_ease-out]">
+                <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-6">
+                        <div className="levitate"><BlueBoxModel /></div>
+                        <div>
+                            <h2 className="text-4xl title-black bg-gradient-text">KEY TAKEAWAYS</h2>
+                            <p className="text-text-main font-medium mt-1">Blue Ocean Strategy Business Game Overview</p>
+                        </div>
+                    </div>
+                    <div className="hidden lg:flex text-sm text-gray-400 items-center gap-2 animate-pulse pr-4">
+                        Scroll to explore
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                    </div>
+                </div>
+
+                {/* Horizontal Scrolling Row for all 6 items */}
+                <div className="flex flex-nowrap overflow-x-auto no-scrollbar gap-4 pb-8 items-stretch w-full snap-x" style={{ scrollSnapType: 'x mandatory' }}>
+                    
+                    {/* Point 1 */}
+                    <div className="glass-card no-hover p-6 border-t-4 border-t-[#007AFF] min-w-[340px] flex-1 flex flex-col snap-start">
+                        <h3 className="title-black text-lg mb-4">1. Marketing investment is non-negotiable</h3>
+                        <p className="text-sm text-text-main leading-relaxed">Underspending on marketing in the Red Round caused market share to drop from 21% to 12%. Recovery only happened when marketing spend increased to $70K+. In a Blue Ocean launch, if noncustomers don't know your product exists, even the best strategy fails.</p>
+                    </div>
+
+                    {/* Point 2 */}
+                    <div className="glass-card no-hover p-6 border-t-4 border-t-[#A855F7] min-w-[340px] flex-1 flex flex-col snap-start">
+                        <h3 className="title-black text-lg mb-4">2. Segment clarity must drive product decisions</h3>
+                        <p className="text-sm text-text-main leading-relaxed">Clearly identifying what Path 3 (parents) and Path 5 (social adults) wanted — and building exclusively around those needs — was the foundation of Blue Box's success. Every time we invested in factors outside our target segments, the simulation penalized us with "exceeds market expectations — lost margin without additional sales."</p>
+                    </div>
+
+                    {/* Point 3 */}
+                    <div className="glass-card no-hover p-6 border-t-4 border-t-[#34C759] min-w-[340px] flex-1 flex flex-col snap-start">
+                        <h3 className="title-black text-lg mb-4">3. Corporate projects are growth enablers</h3>
+                        <p className="text-sm text-text-main leading-relaxed">Launching cost reduction projects (A, B, D, J) during the Red Round reduced unit cost from $177 to $127 before Blue Box even launched. When combined with production scale-up, volume-based COGS reduction brought unit cost further down to $118 — a 33% total reduction. Preparing infrastructure before expansion creates the conditions for sustainable growth.</p>
+                    </div>
+
+                    {/* Point 4 */}
+                    <div className="glass-card no-hover p-6 border-t-4 border-t-[#FACC15] min-w-[340px] flex-1 flex flex-col snap-start">
+                        <h3 className="title-black text-lg mb-4">4. Differentiate through service, not features</h3>
+                        <p className="text-sm text-text-main leading-relaxed">Year 46-47 competitors copied product, share price dipped 864 to 793. Service pivot (Path 4) drove recovery 793 to 1,156. Unit cost stayed controlled at $118.</p>
+                    </div>
+
+                    {/* Point 5 */}
+                    <div className="glass-card no-hover p-6 border-t-4 border-t-[#FF3B30] min-w-[450px] flex-1 flex flex-col snap-start">
+                        <h3 className="title-black text-lg mb-4">5. Production planning accuracy is a profit lever</h3>
+                        <div className="mb-4 flex-grow w-full">
+                            <DataTable
+                                columns={["Year", "Plan", "Actual Demand", "Penalty"]}
+                                highlightCol={3}
+                                data={[
+                                    ["Y44", "900 KU", "345 KU", "$7.5M"],
+                                    ["Y45", "650 KU", "1,013 KU", "$2.7M"],
+                                    ["Y48", "2,730 KU", "3,649 KU", "$13.9M"],
+                                    ["Y49", "5,450 KU", "5,086 KU", "$2.6M"]
+                                ]}
+                            />
+                        </div>
+                        <p className="text-sm text-text-main font-medium leading-relaxed mt-2">Total Penalty: $26.7M, total avoidable. Always based on historical of actual demand to plan in production when there’s a motivation to grow (price decrease, salesforce, additional promotion, aftersales service).</p>
+                    </div>
+
+                    {/* Point 6 */}
+                    <div className="glass-card no-hover p-6 border-t-4 border-t-[#00F0FF] min-w-[340px] flex-1 flex flex-col snap-start">
+                        <h3 className="title-black text-lg mb-4">6. Price is a noncustomer unlock</h3>
+                        <p className="text-sm text-text-main leading-relaxed">The simulation flagged "price too high" for four consecutive years (Y44-Y47) while the team reduced price only gradually. Non-customers have a fixed price threshold, when price dropped from $269 to $249 in Year 48, demand jumped from 1,886 KU to 3,649 KU (+93% YoY). In Blue Ocean, price doesn't just affect margin, it determines whether the mass of noncustomers will cross the threshold and buy.</p>
+                    </div>
+
+                </div>
+            </div>
+        );
+
+        // ==========================================
+        // MAIN APP
+        // ==========================================
+        const App = () => {
+            const [activeTab, setActiveTab] = useState(0);
+            const [modalData, setModalData] = useState(null);
+            
+            // Function to handle opening the chart modal
+            const handleOpenChart = (metricKey, title, yearIndices, colorCode) => {
+                setModalData({
+                    title: title,
+                    labels: yearIndices.map(i => METRIC_DATA.labels[i]),
+                    values: yearIndices.map(i => METRIC_DATA[metricKey][i]),
+                    color: colorCode
+                });
+            };
+
+            const handleCloseChart = () => setModalData(null);
+
+            const tabs = [
+                { name: "Introduction", component: <IntroView onOpenChart={handleOpenChart} /> },
+                { name: "Red Round", component: <RedRoundView onOpenChart={handleOpenChart} /> },
+                { name: "Blue Round 1", component: <Blue1View onOpenChart={handleOpenChart} /> },
+                { name: "Blue Round 2", component: <Blue2View onOpenChart={handleOpenChart} /> },
+                { name: "Blue Round 3", component: <Blue3View onOpenChart={handleOpenChart} /> },
+                { name: "Conclusion", component: <ConclusionView /> }
+            ];
+
+            return (
+                <div className="min-h-screen py-10 px-4 sm:px-8 max-w-7xl mx-auto flex flex-col overflow-hidden">
+                    {/* Header: Pure Glassmorphism */}
+                    <header className="flex flex-col items-center justify-center mb-12 glass-card no-hover p-6 md:p-8 z-20 relative gap-6">
+                        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-center sm:text-left">
+                            <div className="levitate flex-shrink-0"><BlueBuddiesLogo className="w-16 h-16" /></div>
+                            <div className="flex-shrink-0 max-w-full overflow-hidden">
+                                {/* Title locked to a single line using whitespace-nowrap */}
+                                <h1 className="text-3xl md:text-4xl title-black bg-gradient-text tracking-tight whitespace-nowrap">Blue Buddies - Group 19</h1>
+                                <p className="text-text-main text-sm font-medium tracking-wide uppercase mt-1">BOSS Presentation</p>
+                            </div>
+                        </div>
+                        
+                        {/* Navigation Area */}
+                        <div className="flex flex-col items-center w-full">
+                            {/* Main Navigation (4 fixed tabs) - Forced nowrap & Center Aligned */}
+                            <nav className="flex flex-nowrap justify-center gap-2 md:gap-4 overflow-x-auto w-full pb-2 md:pb-0 no-scrollbar items-center">
+                                <button 
+                                    onClick={() => setActiveTab(0)}
+                                    className={`px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 whitespace-nowrap flex-shrink-0 ${activeTab === 0 ? 'bg-[#1A1A1A] text-white shadow-lg' : 'bg-white/50 text-[#4A4A4A] hover:bg-white/80 border border-white'}`}
+                                >Introduction</button>
+                                <button 
+                                    onClick={() => setActiveTab(1)}
+                                    className={`px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 whitespace-nowrap flex-shrink-0 ${activeTab === 1 ? 'bg-[#1A1A1A] text-white shadow-lg' : 'bg-white/50 text-[#4A4A4A] hover:bg-white/80 border border-white'}`}
+                                >Red Round</button>
+                                <button 
+                                    onClick={() => setActiveTab(activeTab >= 2 && activeTab <= 4 ? activeTab : 2)}
+                                    className={`px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 whitespace-nowrap flex-shrink-0 ${activeTab >= 2 && activeTab <= 4 ? 'bg-[#007AFF] text-white shadow-[0_4px_15px_rgba(0,122,255,0.4)]' : 'bg-white/50 text-[#4A4A4A] hover:bg-white/80 border border-white'}`}
+                                >Blue Round</button>
+                                <button 
+                                    onClick={() => setActiveTab(5)}
+                                    className={`px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 whitespace-nowrap flex-shrink-0 ${activeTab === 5 ? 'bg-[#1A1A1A] text-white shadow-lg' : 'bg-white/50 text-[#4A4A4A] hover:bg-white/80 border border-white'}`}
+                                >Conclusion</button>
+                            </nav>
+
+                            {/* Sub-Navigation for Blue Round */}
+                            <div className={`transition-all duration-500 overflow-hidden flex justify-center w-full ${activeTab >= 2 && activeTab <= 4 ? 'max-h-12 opacity-100 mt-3' : 'max-h-0 opacity-0 mt-0'}`}>
+                                <nav className="flex flex-nowrap gap-2 justify-center overflow-x-auto no-scrollbar">
+                                    <button 
+                                        onClick={() => setActiveTab(2)}
+                                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300 whitespace-nowrap flex-shrink-0 ${activeTab === 2 ? 'bg-[#00F0FF] text-gray-900 shadow-md' : 'bg-white/40 text-gray-600 hover:bg-white/80 border border-white/50'}`}
+                                    >Round 1</button>
+                                    <button 
+                                        onClick={() => setActiveTab(3)}
+                                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300 whitespace-nowrap flex-shrink-0 ${activeTab === 3 ? 'bg-[#00F0FF] text-gray-900 shadow-md' : 'bg-white/40 text-gray-600 hover:bg-white/80 border border-white/50'}`}
+                                    >Round 2</button>
+                                    <button 
+                                        onClick={() => setActiveTab(4)}
+                                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300 whitespace-nowrap flex-shrink-0 ${activeTab === 4 ? 'bg-[#00F0FF] text-gray-900 shadow-md' : 'bg-white/40 text-gray-600 hover:bg-white/80 border border-white/50'}`}
+                                    >Round 3</button>
+                                </nav>
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* Main Content Area */}
+                    <main className="transition-all duration-500 z-10 relative flex-grow">
+                        {tabs[activeTab].component}
+                    </main>
+                    
+                    <footer className="mt-20 text-center text-sm text-text-main pb-8 z-10 relative">
+                        <div className="inline-block text-center opacity-80 border-t border-gray-200/60 pt-4 mt-2 text-xs">
+                            <p className="mb-1"><strong className="title-black">Course:</strong> Business Game - CFVG MBA 34</p>
+                            <p className="mb-1"><strong className="title-black">Instructor:</strong> Binh Tu Van</p>
+                            <p><strong className="title-black">Group 19 - Germany:</strong> Yen NGUYEN - Phuong LUU - Nguyen LE - Ha NGUYEN</p>
+                        </div>
+                    </footer>
+
+                    {/* Global Chart Modal */}
+                    <ChartModal isOpen={!!modalData} onClose={handleCloseChart} data={modalData} />
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
