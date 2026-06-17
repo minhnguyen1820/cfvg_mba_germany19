@@ -85,6 +85,12 @@
             -webkit-text-fill-color: transparent;
         }
 
+        .bg-gradient-red {
+            background: linear-gradient(135deg, #FF3B30 0%, #FF8A80 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
         /* Ambient background decorative elements */
         .ambient-orb {
             position: absolute;
@@ -95,22 +101,23 @@
             pointer-events: none;
         }
 
-        /* Custom Scrollbar for horizontal scrolling panels */
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
 
-        /* Hide scrollbar but keep functionality for nav */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 
-    <!-- React & ReactDOM -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone@7.24.4/babel.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- CRITICAL BUG FIX: Explicitly loading UMD versions to avoid "import outside module" errors -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone@7.23.6/babel.min.js" crossorigin></script>
+    
+    <!-- Stable Chart.js UMD -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 </head>
 <body>
     <!-- Ambient Lights -->
@@ -218,19 +225,41 @@
 
 
         // ==========================================
-        // DATA DICTIONARY (WITH Y40 MILESTONE)
+        // DATA DICTIONARY
         // ==========================================
         const METRIC_DATA = {
-            labels: ['Y40 (Initial)', 'Y41', 'Y42', 'Y43', 'Y44', 'Y45', 'Y46', 'Y47', 'Y48', 'Y49'],
+            labels: ['Y40', 'Y41', 'Y42', 'Y43', 'Y44', 'Y45', 'Y46', 'Y47', 'Y48', 'Y49'],
             spi: [1000, 950, 735, 623, 809, 864, 811, 793, 982, 1156],
+            revenue: [926, 903, 617, 500, 773, 878, 900, 945, 1355, 1758],
             marketShare: [22, 21, 14, 12, 15, 19, 20, 20, 27, 40.4],
-            ebit: [366, 352, 254, 152, 132, 155, 155, 158, 289, 401],
-            revenue: [926, 903, 617, 500, 773, 878, 900, 945, 1355, 1758]
+            ebit: [366, 352, 254, 152, 132, 155, 155, 158, 289, 401]
+        };
+
+        const YEARLY_DETAILS = [
+            { year: 'Y40', total: { spi: 1000, rev: '$926M', ms: '22%', ebit: '$366M' }, redBox: { plan: '2200 KU', actual: '2264 KU', penalty: '$0M' }, blueBox: { plan: '-', actual: '-', penalty: '-' }, marketing: '$94M', specs: 'Standard Red Box Specs' },
+            { year: 'Y41', total: { spi: 950, rev: '$903M', ms: '21%', ebit: '$352M' }, redBox: { plan: '2300 KU', actual: '2264 KU', penalty: '$0.3M' }, blueBox: { plan: '-', actual: '-', penalty: '-' }, marketing: '$94M', specs: 'No major changes' },
+            { year: 'Y42', total: { spi: 735, rev: '$617M', ms: '14%', ebit: '$254M' }, redBox: { plan: '2300 KU', actual: '1547 KU', penalty: '$10.1M' }, blueBox: { plan: '-', actual: '-', penalty: '-' }, marketing: '$50M', specs: 'Focus 36+, Cut Graphics/Audio' },
+            { year: 'Y43', total: { spi: 623, rev: '$500M', ms: '12%', ebit: '$152M' }, redBox: { plan: '2100 KU', actual: '1319 KU', penalty: '$14.8M' }, blueBox: { plan: '-', actual: '-', penalty: '-' }, marketing: '$10M (Error)', specs: 'Online Lvl 70, Focus 22-35' },
+            { year: 'Y44', total: { spi: 809, rev: '$773M', ms: '15%', ebit: '$132M' }, redBox: { plan: '550 KU', actual: '508 KU', penalty: '$0.5M' }, blueBox: { plan: '900 KU', actual: '345 KU', penalty: '$7.5M' }, marketing: '$70M+', specs: 'Blue Box Launch (Ease 5, Family 5)' },
+            { year: 'Y45', total: { spi: 864, rev: '$878M', ms: '19%', ebit: '$155M' }, redBox: { plan: '1400 KU', actual: '1410 KU', penalty: '$0M' }, blueBox: { plan: '650 KU', actual: '1013 KU', penalty: '$2.7M' }, marketing: 'Increased for Starland', specs: 'Price Drop $299, Expanded reach' },
+            { year: 'Y46', total: { spi: 811, rev: '$900M', ms: '20%', ebit: '$155M' }, redBox: { plan: '1500 KU', actual: '1582 KU', penalty: '$0.2M' }, blueBox: { plan: '1500 KU', actual: '1359 KU', penalty: '$1.5M' }, marketing: 'Scaled up to $125M', specs: 'Cut space-saving, Price $269' },
+            { year: 'Y47', total: { spi: 793, rev: '$945M', ms: '20%', ebit: '$158M' }, redBox: { plan: '1100 KU', actual: '1154 KU', penalty: '$0.1M' }, blueBox: { plan: '2000 KU', actual: '1886 KU', penalty: '$1.2M' }, marketing: 'Global expansion', specs: 'Shift focus to Service/Delivery' },
+            { year: 'Y48', total: { spi: 982, rev: '$1355M', ms: '27%', ebit: '$289M' }, redBox: { plan: '800 KU', actual: '850 KU', penalty: '$0.1M' }, blueBox: { plan: '2730 KU', actual: '3649 KU', penalty: '$13.9M' }, marketing: 'Maximized', specs: 'Leadership & Service Center, Trainers' },
+            { year: 'Y49', total: { spi: 1156, rev: '$1758M', ms: '40.4%', ebit: '$401M' }, redBox: { plan: '400 KU', actual: '420 KU', penalty: '$0M' }, blueBox: { plan: '5450 KU', actual: '5086 KU', penalty: '$2.6M' }, marketing: 'Maximized', specs: 'Service Moat Complete, Price $249' }
+        ];
+
+        const ROUND_INDICES = {
+            intro: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 
+            red: [0, 1, 2, 3],                     
+            blue1: [0, 1, 2, 3, 4],                
+            blue2: [0, 1, 2, 3, 4, 5, 6],          
+            blue3: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]  
         };
 
         const COMPETITOR_DATA = {
             'Y40': [22, 33, 28, 17],
             'Y41': [21, 35, 29, 15],
+            'Y42': [14, 39, 28, 19],
             'Y43': [12, 45, 35, 8],
             'Y44': [15, 42, 33, 10],
             'Y45': [19, 38, 28, 15],
@@ -240,26 +269,40 @@
             'Y49': [40.4, 18, 18.6, 23]
         };
 
-        const YEARLY_DETAILS = [
-            { year: 'Y40', total: { spi: 1000, rev: '$926M', ms: '22%', ebit: '$366M' }, redBox: { plan: '2200 KU', actual: '2264 KU', penalty: '$0M' }, blueBox: { plan: '-', actual: '-', penalty: '-' }, marketing: '$94M', specs: 'Standard Red Box Specs' },
-            { year: 'Y41', total: { spi: 950, rev: '$903M', ms: '21%', ebit: '$352M' }, redBox: { plan: '2300 KU', actual: '2264 KU', penalty: '$0.3M' }, blueBox: { plan: '-', actual: '-', penalty: '-' }, marketing: '$94M', specs: 'No major changes' },
-            { year: 'Y42', total: { spi: 735, rev: '$617M', ms: '14%', ebit: '$254M' }, redBox: { plan: '2300 KU', actual: '1547 KU', penalty: '$10.2M' }, blueBox: { plan: '-', actual: '-', penalty: '-' }, marketing: '$50M', specs: 'Focus 36+, Cut Graphics/Audio' },
-            { year: 'Y43', total: { spi: 623, rev: '$500M', ms: '12%', ebit: '$152M' }, redBox: { plan: '2100 KU', actual: '1319 KU', penalty: '$14.8M' }, blueBox: { plan: '-', actual: '-', penalty: '-' }, marketing: '$10M (Error)', specs: 'Online Lvl 70, Focus 22-35' },
-            { year: 'Y44', total: { spi: 809, rev: '$773M', ms: '15%', ebit: '$132M' }, redBox: { plan: '550 KU', actual: '508 KU', penalty: '$0.5M' }, blueBox: { plan: '900 KU', actual: '345 KU', penalty: '$7.5M' }, marketing: '$70M+', specs: 'Blue Box Launch (Ease 5, Family 5)' },
-            { year: 'Y45', total: { spi: 864, rev: '$878M', ms: '19%', ebit: '$155M' }, redBox: { plan: '1400 KU', actual: '1410 KU', penalty: '$0M' }, blueBox: { plan: '650 KU', actual: '1013 KU', penalty: '$2.7M' }, marketing: 'Increased for Starland', specs: 'Price Drop $299, Expanded reach' },
-            { year: 'Y46', total: { spi: 811, rev: '$900M', ms: '20%', ebit: '$155M' }, redBox: { plan: '1500 KU', actual: '1582 KU', penalty: '$0.2M' }, blueBox: { plan: '1500 KU', actual: '1359 KU', penalty: '$1.5M' }, marketing: 'Sustained', specs: 'Cut space-saving, Price $269' },
-            { year: 'Y47', total: { spi: 793, rev: '$945M', ms: '20%', ebit: '$158M' }, redBox: { plan: '1100 KU', actual: '1154 KU', penalty: '$0.1M' }, blueBox: { plan: '2000 KU', actual: '1886 KU', penalty: '$1.2M' }, marketing: 'Global expansion', specs: 'Shift focus to Service/Delivery' },
-            { year: 'Y48', total: { spi: 982, rev: '$1355M', ms: '27%', ebit: '$289M' }, redBox: { plan: '800 KU', actual: '850 KU', penalty: '$0.1M' }, blueBox: { plan: '2730 KU', actual: '3649 KU', penalty: '$13.9M' }, marketing: 'Maximized', specs: 'Leadership & Service Center, Trainers' },
-            { year: 'Y49', total: { spi: 1156, rev: '$1758M', ms: '40.4%', ebit: '$401M' }, redBox: { plan: '400 KU', actual: '420 KU', penalty: '$0M' }, blueBox: { plan: '5450 KU', actual: '5086 KU', penalty: '$2.6M' }, marketing: 'Maximized', specs: 'Service Moat Complete, Price $249' }
-        ];
+        const PRODUCTION_HISTORY = {
+            red: [
+                { year: 'Y42', plan: '2,300 KU', actual: '1,547 KU', penalty: '$10.1M' },
+                { year: 'Y43', plan: '2,100 KU', actual: '1,319 KU', penalty: '$14.8M' }
+            ],
+            blue1: [
+                { year: 'Y44', plan: '900 KU (Blue)', actual: '345 KU (Blue)', penalty: '$7.5M' }
+            ],
+            blue2: [
+                { year: 'Y45', plan: '650 KU (Blue)', actual: '1,013 KU (Blue)', penalty: '$2.7M' },
+                { year: 'Y46', plan: '1,500 KU (Blue)', actual: '1,359 KU (Blue)', penalty: '$1.5M' }
+            ],
+            blue3: [
+                { year: 'Y48', plan: '2,730 KU (Blue)', actual: '3,649 KU (Blue)', penalty: '$13.9M' },
+                { year: 'Y49', plan: '5,450 KU (Blue)', actual: '5,086 KU (Blue)', penalty: '$2.6M' }
+            ]
+        };
 
-        // Indices updated to correctly map full chart line to end of each stage.
-        const ROUND_INDICES = {
-            intro: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], // Y40 to Y49
-            red: [0, 1, 2, 3],                     // Y40 to Y43
-            blue1: [0, 1, 2, 3, 4],                // Y40 to Y44
-            blue2: [0, 1, 2, 3, 4, 5, 6],          // Y40 to Y46
-            blue3: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]  // Y40 to Y49
+        const getPieData = (yearLabel) => {
+            const data = COMPETITOR_DATA[yearLabel] || [25, 25, 25, 25];
+            return {
+                labels: [
+                    `Blue Buddies (${data[0]}%)`, 
+                    `Shiny Apple (${data[1]}%)`, 
+                    `Purple Plum (${data[2]}%)`, 
+                    `Yellow Bananas (${data[3]}%)`
+                ],
+                datasets: [{
+                    data: data,
+                    backgroundColor: ['#007AFF', '#8E8E93', '#A855F7', '#FACC15'],
+                    borderWidth: 1,
+                    borderColor: '#ffffff'
+                }]
+            };
         };
 
         // ==========================================
@@ -269,19 +312,44 @@
             const chartRef = useRef(null);
             const chartInstance = useRef(null);
 
-            useEffect(() => {
-                if (chartInstance.current) chartInstance.current.destroy();
-                const ctx = chartRef.current.getContext('2d');
-                
-                // Deep merge scales properly
-                let mergedScales = type !== 'pie' ? {
-                    y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { color: '#4A4A4A' }, beginAtZero: true },
-                    x: { grid: { display: false }, ticks: { color: '#4A4A4A' } }
-                } : {};
+            // Memoize data string to avoid effect loops
+            const dataStr = JSON.stringify(data);
+            const optionsStr = JSON.stringify(options || {});
 
-                if (options && options.scales) {
-                    if (options.scales.x) mergedScales.x = { ...mergedScales.x, ...options.scales.x };
-                    if (options.scales.y) mergedScales.y = { ...mergedScales.y, ...options.scales.y };
+            useEffect(() => {
+                if (chartInstance.current) {
+                    chartInstance.current.destroy();
+                    chartInstance.current = null;
+                }
+                
+                if (!chartRef.current) return;
+                const ctx = chartRef.current.getContext('2d');
+                if (!ctx) return;
+                
+                const parsedData = JSON.parse(dataStr);
+                const parsedOptions = JSON.parse(optionsStr);
+
+                let mergedScales = type !== 'pie' ? {
+                    y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { color: '#4A4A4A' }, beginAtZero: false },
+                    x: { grid: { display: false }, ticks: { color: '#4A4A4A' } }
+                } : null;
+
+                // Smart calculate Min/Max for Line charts to emphasize the gap dynamically
+                if (type === 'line' && parsedData?.datasets?.[0]?.data && mergedScales) {
+                    const values = parsedData.datasets[0].data;
+                    if (values.length > 0) {
+                        const minVal = Math.min(...values);
+                        const maxVal = Math.max(...values);
+                        let padding = (maxVal - minVal) * 0.1;
+                        if (padding === 0) padding = minVal * 0.1 || 1;
+                        mergedScales.y.min = Math.floor(minVal - padding);
+                        mergedScales.y.max = Math.ceil(maxVal + padding);
+                    }
+                }
+
+                if (mergedScales && parsedOptions?.scales) {
+                    if (parsedOptions.scales.x) mergedScales.x = { ...mergedScales.x, ...parsedOptions.scales.x };
+                    if (parsedOptions.scales.y) mergedScales.y = { ...mergedScales.y, ...parsedOptions.scales.y }; 
                 }
 
                 const combinedOptions = {
@@ -290,15 +358,9 @@
                     plugins: { 
                         legend: { 
                             position: 'bottom', 
-                            labels: { 
-                                font: { family: 'Roboto', size: 11 }, 
-                                color: '#4A4A4A',
-                                boxWidth: 12,
-                                padding: 10
-                            } 
+                            labels: { font: { family: 'Roboto', size: 11 }, color: '#4A4A4A', boxWidth: 12, padding: 10 } 
                         } 
                     },
-                    scales: mergedScales,
                     layout: type === 'pie' ? { padding: { bottom: 10 } } : {},
                     onClick: (event, activeElements) => {
                         if (activeElements.length > 0 && onElementClick) {
@@ -306,21 +368,34 @@
                         }
                     },
                     onHover: (event, chartElement) => {
-                        if (onElementClick) {
-                            event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
+                        if (onElementClick && event.native && event.native.target) {
+                            event.native.target.style.cursor = chartElement.length > 0 ? 'pointer' : 'default';
                         }
                     },
-                    ...options,
-                    scales: mergedScales // override the root scales with our merged object
+                    ...parsedOptions
                 };
 
-                chartInstance.current = new Chart(ctx, {
-                    type: type,
-                    data: data,
-                    options: combinedOptions
-                });
-                return () => { if (chartInstance.current) chartInstance.current.destroy(); };
-            }, [data, type, options, onElementClick]);
+                if (mergedScales) {
+                    combinedOptions.scales = mergedScales;
+                }
+
+                try {
+                    chartInstance.current = new Chart(ctx, {
+                        type: type,
+                        data: parsedData,
+                        options: combinedOptions
+                    });
+                } catch(e) {
+                    console.error("Chart rendering error:", e);
+                }
+                
+                return () => { 
+                    if (chartInstance.current) {
+                        chartInstance.current.destroy(); 
+                        chartInstance.current = null;
+                    }
+                };
+            }, [dataStr, optionsStr, type, id]);
 
             return <div className="w-full h-full min-h-[250px]"><canvas ref={chartRef} id={id}></canvas></div>;
         };
@@ -357,28 +432,112 @@
             );
         };
 
-        const DataTable = ({ columns, data, highlightCol }) => (
-            <div className="overflow-x-auto w-full rounded-2xl glass-card no-hover">
-                <table className="w-full text-sm text-left">
-                    <thead className="bg-white/30 text-text-title font-black uppercase text-xs tracking-wider border-b border-white/50">
-                        <tr>
-                            {columns.map((col, idx) => (
-                                <th key={idx} className="px-5 py-4 whitespace-nowrap">{col}</th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/20">
-                        {data.map((row, rIdx) => (
-                            <tr key={rIdx} className="hover:bg-white/30 transition-colors">
-                                {row.map((cell, cIdx) => (
-                                    <td key={cIdx} className={`px-5 py-4 ${cIdx === highlightCol ? 'font-bold text-[#007AFF] bg-[#007AFF]/5' : 'text-text-main'}`}>
-                                        {cell}
-                                    </td>
+        const DataTable = ({ columns, data }) => {
+            const getActionColor = (text) => {
+                const lowerText = text.toLowerCase();
+                if (lowerText.includes('reduce') || lowerText.includes('cut') || lowerText.includes('eliminate')) return 'text-red-600 bg-red-50';
+                if (lowerText.includes('raise') || lowerText.includes('create') || lowerText.includes('scale up') || lowerText.includes('invest') || lowerText.includes('max') || lowerText.includes('pivot')) return 'text-blue-600 bg-blue-50';
+                if (lowerText.includes('error') || lowerText.includes('fatal')) return 'text-white bg-red-600';
+                return 'text-gray-700 bg-gray-100';
+            };
+
+            return (
+                <div className="overflow-x-auto w-full rounded-2xl glass-card no-hover">
+                    <table className="w-full text-sm text-left">
+                        <thead className="bg-white/50 text-text-title font-black uppercase text-xs tracking-wider border-b border-white/80">
+                            <tr>
+                                {columns.map((col, idx) => (
+                                    <th key={idx} className="px-5 py-4 whitespace-nowrap min-w-max">{col}</th>
                                 ))}
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="divide-y divide-white/20">
+                            {data.map((row, rIdx) => (
+                                <tr key={rIdx} className="hover:bg-white/40 transition-colors">
+                                    {row.map((cell, cIdx) => {
+                                        // Action column is at index 3
+                                        if (cIdx === 3) {
+                                            return (
+                                                <td key={cIdx} className="px-5 py-4 font-bold whitespace-nowrap">
+                                                    <span className={`px-3 py-1 rounded-full text-xs ${getActionColor(cell)}`}>
+                                                        {cell}
+                                                    </span>
+                                                </td>
+                                            );
+                                        }
+                                        return (
+                                            <td key={cIdx} className={`px-5 py-4 ${cIdx === 0 ? 'font-bold text-gray-800' : 'text-text-main'} ${cIdx === 4 ? 'min-w-[250px]' : ''}`}>
+                                                {cell}
+                                            </td>
+                                        );
+                                    })}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            );
+        };
+
+        const ProductionBox = ({ data }) => (
+            <div className="glass-card no-hover p-6 bg-red-50/30 border-t-4 border-brand-red h-full flex flex-col justify-center">
+                <h4 className="title-black text-lg mb-4 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-brand-red" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    Production Planning Penalty
+                </h4>
+                <div className="space-y-4">
+                    {data.map((d, i) => (
+                        <div key={i} className="border-b border-gray-300/50 pb-2 last:border-0 last:pb-0">
+                            <div className="flex justify-between font-bold text-gray-800 mb-1">
+                                <span>{d.year}</span>
+                                <span className="text-brand-red">Penalty: {d.penalty}</span>
+                            </div>
+                            <div className="flex justify-between text-sm text-gray-600">
+                                <span>Plan: {d.plan}</span>
+                                <span>Actual: {d.actual}</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+
+        const ProsConsBox = ({ pros, cons }) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <div className="bg-green-50/50 border border-green-200 rounded-xl p-6">
+                    <h4 className="text-green-700 font-black mb-3 flex items-center gap-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        PROS (What worked)
+                    </h4>
+                    <ul className="list-disc pl-5 space-y-2 text-sm text-gray-700">
+                        {pros.map((pro, i) => <li key={i}>{pro}</li>)}
+                    </ul>
+                </div>
+                <div className="bg-red-50/50 border border-red-200 rounded-xl p-6">
+                    <h4 className="text-red-700 font-black mb-3 flex items-center gap-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        CONS (What failed/Risks)
+                    </h4>
+                    <ul className="list-disc pl-5 space-y-2 text-sm text-gray-700">
+                        {cons.map((con, i) => <li key={i}>{con}</li>)}
+                    </ul>
+                </div>
+            </div>
+        );
+
+        const MarketSharePies = ({ years }) => (
+            <div className="mt-8 border-t border-gray-200/50 pt-8">
+                <SectionHeader title="Market Share Evolution" subtitle="Competitive Landscape Tracking" />
+                <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-${years.length > 4 ? 4 : years.length} gap-6`}>
+                    {years.map((year, idx) => (
+                        <div key={idx} className="glass-card no-hover p-4 flex flex-col items-center">
+                            <h4 className="title-black text-center mb-2">{year}</h4>
+                            <div className="w-full h-48 relative">
+                                <ChartComponent type="pie" data={getPieData(year)} id={`pie-${year}-${idx}`} />
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         );
 
@@ -400,26 +559,30 @@
                 datasets: [{
                     label: data.title,
                     data: data.values,
-                    backgroundColor: data.color || '#007AFF',
-                    borderRadius: 6,
-                    borderWidth: 1,
-                    borderColor: 'rgba(255,255,255,0.5)',
+                    backgroundColor: data.type === 'bar' ? data.color || '#007AFF' : `${data.color}1A`,
+                    borderColor: data.color || '#007AFF',
+                    borderWidth: 3,
+                    borderRadius: data.type === 'bar' ? 6 : 0,
+                    fill: data.type === 'line',
+                    tension: 0.4,
+                    pointBackgroundColor: '#FFFFFF',
+                    pointBorderColor: data.color || '#007AFF'
                 }]
             };
 
             return (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-                    <div className="absolute inset-0 bg-white/20 backdrop-blur-md transition-opacity" onClick={onClose}></div>
+                    <div className="absolute inset-0 bg-gray-900/30 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
                     <div className="glass-card no-hover relative z-10 w-full max-w-4xl p-6 sm:p-10 shadow-[0_40px_80px_rgba(0,0,0,0.15)] animate-[fadeIn_0.3s_ease-out]">
                         <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-white/50 rounded-full text-gray-600 hover:text-black hover:bg-white transition-colors">
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                         </button>
                         <div className="mb-6">
                             <h2 className="text-2xl title-black text-text-title">{data.title}</h2>
-                            <p className="text-text-main mt-1 text-sm">Tracking from Initial Milestone (Y40) to End of Stage</p>
+                            <p className="text-text-main mt-1 text-sm">Tracking Trend Dynamics</p>
                         </div>
                         <div className="h-80 w-full bg-white/30 rounded-xl p-4 border border-white/50">
-                            <ChartComponent type="bar" data={chartConfig} id="popupChart" />
+                            <ChartComponent type={data.type || 'line'} data={chartConfig} id="popupChart" />
                         </div>
                     </div>
                 </div>
@@ -431,7 +594,7 @@
 
             return (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-                    <div className="absolute inset-0 bg-white/20 backdrop-blur-md transition-opacity" onClick={onClose}></div>
+                    <div className="absolute inset-0 bg-gray-900/30 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
                     <div className="glass-card no-hover relative z-10 w-full max-w-4xl p-6 sm:p-8 shadow-[0_40px_80px_rgba(0,0,0,0.15)] animate-[fadeIn_0.3s_ease-out] overflow-y-auto max-h-[90vh]">
                         <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-white/50 rounded-full text-gray-600 hover:text-black hover:bg-white transition-colors">
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -453,12 +616,12 @@
                                 <p className="text-2xl title-black text-gray-900">{yearData.total.rev}</p>
                             </div>
                             <div className="bg-white/50 p-4 rounded-xl border border-white">
-                                <p className="text-xs text-gray-500 font-bold uppercase mb-1">Total EBIT</p>
-                                <p className="text-2xl title-black text-gray-900">{yearData.total.ebit}</p>
-                            </div>
-                            <div className="bg-white/50 p-4 rounded-xl border border-white">
                                 <p className="text-xs text-gray-500 font-bold uppercase mb-1">Market Share</p>
                                 <p className="text-2xl title-black text-gray-900">{yearData.total.ms}</p>
+                            </div>
+                            <div className="bg-white/50 p-4 rounded-xl border border-white">
+                                <p className="text-xs text-gray-500 font-bold uppercase mb-1">Total EBIT</p>
+                                <p className="text-2xl title-black text-gray-900">{yearData.total.ebit}</p>
                             </div>
                         </div>
 
@@ -524,415 +687,89 @@
             );
         };
 
-        // ==========================================
-        // PART 3 COMPONENT (MARKET SHARE & TRENDS)
-        // ==========================================
-        const PerformanceSection = ({ pieYears, lineIndices, sectionId }) => {
-            const getPieData = (yearLabel) => {
-                const data = COMPETITOR_DATA[yearLabel] || [25, 25, 25, 25];
-                return {
-                    labels: [
-                        `Blue Buddies (${data[0]}%)`, 
-                        `Shiny Apple (${data[1]}%)`, 
-                        `Purple Plum (${data[2]}%)`, 
-                        `Yellow Bananas (${data[3]}%)`
-                    ],
-                    datasets: [{
-                        data: data,
-                        backgroundColor: ['#007AFF', '#8E8E93', '#A855F7', '#FACC15'],
-                        borderWidth: 0
-                    }]
-                };
-            };
+        const SegmentStrategyModal = ({ isOpen, onClose, roundId }) => {
+            if (!isOpen) return null;
 
-            const getLineData = (metricKey, label, color) => ({
-                labels: lineIndices.map(i => METRIC_DATA.labels[i]),
-                datasets: [{
-                    label: label,
-                    data: lineIndices.map(i => METRIC_DATA[metricKey][i]),
-                    borderColor: color,
-                    backgroundColor: `${color}1A`,
-                    borderWidth: 3, fill: true, tension: 0.4,
-                    pointBackgroundColor: '#FFFFFF', pointBorderColor: color
-                }]
-            });
+            let title = "";
+            let description = "";
+            let data = [];
+
+            if (roundId === 'red') {
+                title = "Target Segment Strategy: Red Round (Y41-Y43)";
+                description = "Attempting to survive in the heavily contested Red Ocean by focusing on traditional gamers.";
+                data = [
+                    { target: "36+ Year Olds", traits: "Not price sensitive. Expect high graphic & audio sophistication.", action: "Targeted (Y42)", outcome: "Failed to deliver. We targeted them but cut Graphics/Audio features they valued most to save budget.", isIgnored: false },
+                    { target: "22-35 Year Olds", traits: "Quite price sensitive. Look for high gaming experience & multimedia.", action: "Pivoted Here (Y43)", outcome: "Failed to win. Chased volume, but Purple Player already held absolute dominance in this segment.", isIgnored: false },
+                    { target: "6-21 Year Olds", traits: "Highly price sensitive. Seek basic gaming.", action: "IGNORED", outcome: "Left to Yellow Bananas. Avoiding margin-destroying price wars.", isIgnored: true }
+                ];
+            } else if (roundId === 'blue12') {
+                title = "Target Segment Strategy: Blue Round 1 & 2 (Y44-Y46)";
+                description = "The Pivot to Non-Customers. Unlocking mass demand by eliminating what doesn't matter.";
+                data = [
+                    { target: "Path 3: Parents", traits: "Non-customers who refuse traditional consoles. They want Family/Social interaction, not solitary gaming.", action: "Primary Target", outcome: "Massive success. By creating 'Family/Social' (Level 5) and eliminating 'Console Power', we won this group.", isIgnored: false },
+                    { target: "Path 5: Social Adults", traits: "Non-gamers who value 'Ease of Use' and functional simplicity over emotional tech appeal.", action: "Secondary Target", outcome: "Massive success. 'Ease of Use' & 'Motion Control' drove adoption while lowering our base unit cost.", isIgnored: false },
+                    { target: "Path 4 (Services)", traits: "Non-traditional gamers seeking guidance & expert support.", action: "IGNORED", outcome: "Decided to focus strictly on Product innovation first (Social/Family gaming) before expanding to services.", isIgnored: true },
+                    { target: "Path 1, 2, 6", traits: "Other non-customer paths involving alternative industries or services.", action: "IGNORED", outcome: "Ignored to prevent spreading budget thin and diluting the core message.", isIgnored: true }
+                ];
+            } else if (roundId === 'blue3') {
+                title = "Target Segment Strategy: Blue Round 3 (Y47-Y49)";
+                description = "Defending the Ocean via Mass Market Service & Delivery.";
+                data = [
+                    { target: "Service Seekers (Path 4)", traits: "Non-traditional gamers who need guidance, expert training, and reliable customer service.", action: "Invested in Moat", outcome: "Absolute dominance. Competitors' product-clones couldn't match our holistic customer experience.", isIgnored: false },
+                    { target: "Mass Market", traits: "A completely unlocked ocean, now facing threat from copycats (Shiny & Yellow Bananas).", action: "100% StarLand", outcome: "Instead of competing on hardware features (which were copied), we targeted service across the board.", isIgnored: false },
+                    { target: "Hardcore Gamers", traits: "Traditional tech-focused gamers demanding ultra-high specifications.", action: "IGNORED", outcome: "Left the feature/specs war entirely to Shiny and Purple. No ROI in fighting for them.", isIgnored: true }
+                ];
+            }
 
             return (
-                <div className="mt-12 animate-[fadeIn_0.5s_ease-out] border-t border-gray-200/50 pt-10">
-                    <SectionHeader title="Part 3: Market Share & Financial Trends" subtitle="Comparing Y40 vs. Stage Timeline" />
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                        {pieYears.map((year, idx) => (
-                            <div key={idx} className="glass-card no-hover p-6 flex flex-col items-center">
-                                <h4 className="title-black text-center mb-4">{year} Market Share</h4>
-                                <div className="w-full h-64 relative">
-                                    <ChartComponent type="pie" data={getPieData(year)} id={`pie-${sectionId}-${idx}`} />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+                    <div className="absolute inset-0 bg-gray-900/30 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
+                    <div className="glass-card no-hover relative z-10 w-full max-w-5xl p-6 sm:p-10 shadow-[0_40px_80px_rgba(0,0,0,0.15)] animate-[fadeIn_0.3s_ease-out] overflow-y-auto max-h-[90vh]">
+                        <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-white/50 rounded-full text-gray-600 hover:text-black hover:bg-white transition-colors">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                        
+                        <div className="mb-8 border-b border-gray-200/50 pb-4">
+                            <h2 className="text-3xl title-black text-brand-blue">{title}</h2>
+                            <p className="text-text-main mt-1 font-medium">{description}</p>
+                        </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="glass-card no-hover p-6">
-                            <h4 className="title-black mb-4 text-[#007AFF]">Share Price Index (SPI)</h4>
-                            <div className="h-56">
-                                <ChartComponent type="line" data={getLineData('spi', 'SPI', '#007AFF')} id={`line-spi-${sectionId}`} />
-                            </div>
-                        </div>
-                        <div className="glass-card no-hover p-6">
-                            <h4 className="title-black mb-4 text-[#A855F7]">Market Share (%)</h4>
-                            <div className="h-56">
-                                <ChartComponent type="line" data={getLineData('marketShare', 'Market Share (%)', '#A855F7')} id={`line-ms-${sectionId}`} />
-                            </div>
-                        </div>
-                        <div className="glass-card no-hover p-6">
-                            <h4 className="title-black mb-4 text-[#FACC15]">Revenue ($M)</h4>
-                            <div className="h-56">
-                                <ChartComponent type="line" data={getLineData('revenue', 'Revenue ($M)', '#FACC15')} id={`line-rev-${sectionId}`} />
-                            </div>
-                        </div>
-                        <div className="glass-card no-hover p-6">
-                            <h4 className="title-black mb-4 text-[#34C759]">Total EBIT ($M)</h4>
-                            <div className="h-56">
-                                <ChartComponent type="line" data={getLineData('ebit', 'Total EBIT ($M)', '#34C759')} id={`line-ebit-${sectionId}`} />
-                            </div>
+                        <div className="overflow-x-auto w-full rounded-2xl border border-gray-200/50 bg-white/50">
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-gray-100/80 text-text-title font-black uppercase text-xs tracking-wider">
+                                    <tr>
+                                        <th className="px-5 py-4 w-1/4">Target Segment</th>
+                                        <th className="px-5 py-4 w-1/4">Key Characteristics</th>
+                                        <th className="px-5 py-4 w-1/6">Strategic Action</th>
+                                        <th className="px-5 py-4 w-1/3">Outcome & Rationale</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200/50">
+                                    {data.map((row, idx) => (
+                                        <tr key={idx} className={`transition-colors ${row.isIgnored ? 'bg-gray-50/50 opacity-60' : 'hover:bg-white/80'}`}>
+                                            <td className="px-5 py-4 font-bold text-gray-800 flex items-center gap-2">
+                                                {row.isIgnored && <span className="text-red-500 font-bold text-lg">☒</span>}
+                                                <span className={row.isIgnored ? "line-through text-gray-500" : ""}>{row.target}</span>
+                                            </td>
+                                            <td className="px-5 py-4 text-gray-600 leading-relaxed">{row.traits}</td>
+                                            <td className={`px-5 py-4 font-bold ${row.isIgnored ? 'text-gray-500' : 'text-brand-blue'}`}>{row.action}</td>
+                                            <td className="px-5 py-4 text-gray-700 leading-relaxed">{row.outcome}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             );
         };
 
+
         // ==========================================
-        // VIEWS
+        // VIEWS (4 Parts Process for each round)
         // ==========================================
         
-        const IntroView = ({ onOpenChart }) => (
-            <div className="space-y-10 animate-[fadeIn_0.5s_ease-out] relative">
-                <div className="absolute top-0 right-0 opacity-10 pointer-events-none levitate" style={{filter: 'blur(10px)', transform: 'scale(3)'}}>
-                    <BlueBuddiesLogo className="w-64 h-64" />
-                </div>
-
-                <div className="glass-card no-hover p-10 text-center relative z-10">
-                    <h1 className="text-5xl title-black bg-gradient-text mb-4">BLUE OCEAN STRATEGY SIMULATION</h1>
-                    <p className="text-xl text-text-main">A 9-Year Journey from Red Ocean Survival to Blue Ocean Dominance.</p>
-                </div>
-
-                <SectionHeader title="The Big Four Competitors" subtitle="Context of the Industry" />
-                
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative z-10">
-                    <div className="glass-card no-hover p-6 flex flex-col items-center text-center">
-                        <div className="levitate mb-4"><BlueBuddiesLogo/></div>
-                        <h3 className="title-black text-lg mb-2">Blue Buddies</h3>
-                        <p className="text-sm text-text-main">Player Team. Transitioning from Red Box (Legacy) to Blue Box (Future).</p>
-                    </div>
-                    <div className="glass-card no-hover p-6 flex flex-col items-center text-center">
-                        <div className="levitate mb-4" style={{animationDelay: '1s'}}><ShinyAppleLogo/></div>
-                        <h3 className="title-black text-lg mb-2">Shiny Apple</h3>
-                        <p className="text-sm text-text-main">Shiny Station. Premium hardware, dominating the older segment.</p>
-                    </div>
-                    <div className="glass-card no-hover p-6 flex flex-col items-center text-center">
-                        <div className="levitate mb-4" style={{animationDelay: '2s'}}><PurplePlumLogo/></div>
-                        <h3 className="title-black text-lg mb-2">Purple Plum</h3>
-                        <p className="text-sm text-text-main">Purple Player. Aggressive dominance in young adult market (22-35).</p>
-                    </div>
-                    <div className="glass-card no-hover p-6 flex flex-col items-center text-center">
-                        <div className="levitate mb-4" style={{animationDelay: '3s'}}><YellowBananaLogo/></div>
-                        <h3 className="title-black text-lg mb-2">Yellow Bananas</h3>
-                        <p className="text-sm text-text-main">Yellow Console. Strong mass-market presence with high online capabilities.</p>
-                    </div>
-                </div>
-
-                <div className="glass-card no-hover p-8 cursor-pointer hover:ring-2 hover:ring-[#007AFF] transition-all group" onClick={() => onOpenChart('spi', 'Complete SPI Journey (Y40-Y49)', ROUND_INDICES.intro, '#007AFF')}>
-                    <div className="flex justify-between items-center mb-4">
-                        <SectionHeader title="Performance Overview (SPI)" subtitle="Click to view detailed Bar Chart" />
-                        <div className="bg-white/50 p-2 rounded-lg group-hover:bg-white transition-all">
-                            <svg className="w-5 h-5 text-gray-500 group-hover:text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                        </div>
-                    </div>
-                    <ChartComponent type="line" data={{
-                        labels: METRIC_DATA.labels,
-                        datasets: [{
-                            label: 'Share Price Index (SPI)',
-                            data: METRIC_DATA.spi,
-                            borderColor: '#007AFF',
-                            backgroundColor: 'rgba(0, 122, 255, 0.1)',
-                            borderWidth: 3, fill: true, tension: 0.4,
-                            pointBackgroundColor: '#FFFFFF', pointBorderColor: '#007AFF'
-                        }]
-                    }} id="introSpi" />
-                </div>
-            </div>
-        );
-
-        const RedRoundView = ({ onOpenChart }) => (
-            <div className="space-y-8 animate-[fadeIn_0.5s_ease-out]">
-                <div className="flex items-center gap-6 mb-8">
-                    <RedBoxModel />
-                    <div>
-                        <h2 className="text-4xl title-black text-[#FF3B30]">RED ROUND (Y41 - Y43)</h2>
-                        <p className="text-text-main font-medium mt-1">Defending the core, preparing for the leap.</p>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <MetricCard title="SPI Drop" value="623" subtext="From 1000 in Y40" trend="-37.7%" isPositive={false} colorTheme="#FF3B30"
-                        onClick={() => onOpenChart('spi', 'SPI Trend (Red Round Y40-Y43)', ROUND_INDICES.red, '#FF3B30')} />
-                    
-                    <MetricCard title="Market Share" value="12%" subtext="Lost to Purple/Shiny" trend="-9%" isPositive={false} colorTheme="#A855F7"
-                        onClick={() => onOpenChart('marketShare', 'Market Share % (Red Round Y40-Y43)', ROUND_INDICES.red, '#A855F7')} />
-                    
-                    <MetricCard title="EBIT (Y43)" value="$152M" subtext="Margin compression" trend="-58%" isPositive={false} colorTheme="#34C759"
-                        onClick={() => onOpenChart('ebit', 'EBIT Trend (Red Round Y40-Y43)', ROUND_INDICES.red, '#34C759')} />
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div className="glass-card no-hover p-8 border-l-4 border-l-[#FF3B30]">
-                        <h3 className="title-black text-xl mb-4">Part 1: Context & Business Status</h3>
-                        <p className="text-sm text-text-main mb-3"><b className="title-black">Macro:</b> Mature, declining red ocean. Budget strictly constrained (~$210M).</p>
-                        <p className="text-sm text-text-main mb-3"><b className="title-black">Competitors:</b> Shiny Apple rules 36+. Purple Plum aggressively took 22-35.</p>
-                        <p className="text-sm text-text-main"><b className="title-black">Strategy:</b> Protect profit margins. Treat Red Box as a Cash Cow to fund R&D for the upcoming Blue Box launch.</p>
-                    </div>
-                    
-                    <div className="glass-card no-hover p-8 bg-red-50/10">
-                        <h3 className="title-black text-xl mb-4 text-[#FF3B30]">Outcomes & Learning</h3>
-                        <ul className="space-y-2 text-sm text-text-main">
-                            <li><b className="title-black">Mismatch:</b> Targeted 36+ but cut Graphics/Audio. Result: Customers rejected it.</li>
-                            <li><b className="title-black">Input Error:</b> Typed $10M marketing instead of $100M. Lost total visibility.</li>
-                            <li><b className="title-black">Overproduction:</b> Over-estimated demand. Huge inventory penalty ($25M total).</li>
-                            <li className="mt-4 pt-3 border-t border-red-200/50"><b className="text-text-title">Lesson 1:</b> Price & Product must align perfectly with the chosen segment's desires.</li>
-                            <li><b className="text-text-title">Lesson 2:</b> Produce based on real demand, not past history.</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div className="mt-8">
-                    <SectionHeader title="Part 2: Decision Making & Rationale" subtitle="Key changes Y42 to Y43" />
-                    <DataTable 
-                        columns={["Factor", "Y42 Decision", "Y43 Decision", "Action", "Strategic Rationale (Why?)"]}
-                        highlightCol={3}
-                        data={[
-                            ["Target Segment", "36+ (45%)", "22-35 (65%)", "Pivot", "Attempted to escape Shiny Station by chasing younger market, but hit Purple Player instead."],
-                            ["Price", "$399", "$379", "Reduce", "Slight reduction to stimulate demand, insufficient to offset weak features."],
-                            ["Marketing", "$50M", "$10M", "Fatal Cut", "Input error. Intended $100M. Catastrophic loss of market share."],
-                            ["Production", "2,300 KU", "2,100 KU", "Cut", "Failed to adjust low enough for dropping demand, causing inventory build-up."],
-                            ["R&D (Online)", "Level 20", "Level 70", "Raise", "Raised features but didn't match the new 22-35 segment precisely."]
-                        ]}
-                    />
-                </div>
-
-                <PerformanceSection pieYears={['Y40', 'Y41', 'Y43']} lineIndices={ROUND_INDICES.red} sectionId="red" />
-            </div>
-        );
-
-        const Blue1View = ({ onOpenChart }) => (
-            <div className="space-y-8 animate-[fadeIn_0.5s_ease-out]">
-                <div className="flex items-center justify-between glass-card no-hover p-6 mb-8 bg-gradient-to-r from-white/20 to-blue-50/30">
-                    <div className="flex items-center gap-4 opacity-50 grayscale"><RedBoxModel/><span className="title-black text-sm">Legacy</span></div>
-                    <div className="flex-1 px-8 text-center"><div className="h-1 bg-gradient-to-r from-gray-300 to-[#00F0FF] relative"><div className="absolute right-0 -top-2 w-0 h-0 border-t-8 border-b-8 border-l-8 border-transparent border-l-[#00F0FF]"></div></div></div>
-                    <div className="flex items-center gap-4"><div className="levitate"><BlueBoxModel/></div><span className="title-black text-lg text-[#007AFF]">The Future</span></div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <MetricCard title="SPI Rebound" value="809" subtext="Massive recovery" trend="+186" isPositive={true} colorTheme="#007AFF"
-                        onClick={() => onOpenChart('spi', 'SPI Trend (Blue R1 Y40-Y44)', ROUND_INDICES.blue1, '#007AFF')} />
-                    
-                    <MetricCard title="Market Share" value="15%" subtext="Red & Blue combined" trend="+3%" isPositive={true} colorTheme="#A855F7"
-                        onClick={() => onOpenChart('marketShare', 'Market Share % (Blue R1 Y40-Y44)', ROUND_INDICES.blue1, '#A855F7')} />
-                    
-                    <MetricCard title="Total EBIT" value="$132M" subtext="Absorbed launch costs" trend="-13%" isPositive={false} colorTheme="#34C759"
-                        onClick={() => onOpenChart('ebit', 'Total EBIT Trend (Blue R1 Y40-Y44)', ROUND_INDICES.blue1, '#34C759')} />
-                    
-                    <MetricCard title="Revenues" value="$773M" subtext="Growth resumes" trend="+54.6%" isPositive={true} colorTheme="#FACC15"
-                        onClick={() => onOpenChart('revenue', 'Revenues Trend (Blue R1 Y40-Y44)', ROUND_INDICES.blue1, '#FACC15')} />
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div className="glass-card no-hover p-8 border-l-4 border-l-[#007AFF]">
-                        <h3 className="title-black text-xl mb-4">Part 1: Context & Strategy</h3>
-                        <p className="text-sm text-text-main mb-3"><b className="title-black">Status:</b> Red Box fading. Time to execute Value Innovation (ERRC).</p>
-                        <p className="text-sm text-text-main mb-4"><b className="title-black">Target:</b> Non-customers: Path 3 (Parents) & Path 5 (Social Adults).</p>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div className="p-4 bg-white/50 rounded-xl"><b className="title-black">Eliminate/Reduce:</b><br/>Graphics, Audio, Console Power</div>
-                            <div className="p-4 bg-white/50 rounded-xl"><b className="title-black">Raise/Create:</b><br/>Ease of Use, Family/Social</div>
-                        </div>
-                    </div>
-                    
-                    <div className="glass-card no-hover p-8 bg-blue-50/10">
-                        <h3 className="title-black text-xl mb-4 text-[#007AFF]">Outcomes & Learning</h3>
-                        <ul className="space-y-2 text-sm text-text-main">
-                            <li><b className="title-black">Validation:</b> Non-customers enthusiastically adopted Blue Box. SPI trend reversed.</li>
-                            <li><b className="title-black">Cost Control:</b> Corporate projects (A, B, D, J) successfully cut unit cost to $127.</li>
-                            <li><b className="title-black">Issue:</b> Planned 900 KU, sold 345 KU. Penalty: $7.5M.</li>
-                            <li className="mt-4 pt-3 border-t border-blue-200/50"><b className="text-text-title">Lesson:</b> Blue Ocean requires a year to "gồng lỗ" (absorb costs) to shape the market. </li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div className="mt-8">
-                    <SectionHeader title="Part 2: Decision Making (Y44 Launch)" subtitle="Executing the ERRC Grid" />
-                    <DataTable 
-                        columns={["Parameter", "Input Value", "ERRC Action", "Strategic Rationale"]}
-                        highlightCol={2}
-                        data={[
-                            ["Price", "$299", "Strategic Pricing", "Set low to unlock mass non-customer demand and overcome adoption hurdles."],
-                            ["Graphics / Audio / Power", "Level 1 or 2", "REDUCE", "Target segments (Parents) do not value hardcore specs. Slashing this drastically lowers Base Unit Cost."],
-                            ["Ease of Use", "Level 5 (Max)", "RAISE", "Critical for non-gamers. Must be plug-and-play without frustration."],
-                            ["Family / Social", "Level 5 (Max)", "CREATE", "Shift focus from solitary dark-room gaming to living room social experiences."],
-                            ["Corp. Projects", "A, B, J", "Enablement", "Activate Manufacturing Relocation & Six Sigma to ensure profitability at the low $299 price point."]
-                        ]}
-                    />
-                </div>
-
-                <PerformanceSection pieYears={['Y40', 'Y43', 'Y44']} lineIndices={ROUND_INDICES.blue1} sectionId="b1" />
-            </div>
-        );
-
-        const Blue2View = ({ onOpenChart }) => (
-            <div className="space-y-8 animate-[fadeIn_0.5s_ease-out]">
-                 <div className="flex items-center gap-6 mb-8">
-                    <div className="levitate"><BlueBoxModel /></div>
-                    <div>
-                        <h2 className="text-4xl title-black text-[#00F0FF]">BLUE ROUND 2 (Y45 - Y46)</h2>
-                        <p className="text-text-main font-medium mt-1">Scaling and commercialization.</p>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <MetricCard title="Revenues" value="$900M" subtext="Growth accelerating" trend="+2%" isPositive={true} colorTheme="#FACC15"
-                        onClick={() => onOpenChart('revenue', 'Revenues Trend (Blue R2 Y40-Y46)', ROUND_INDICES.blue2, '#FACC15')} />
-                    
-                    <MetricCard title="EBIT (Y46)" value="$155M" subtext="Recovering profitability" trend="+0%" isPositive={true} colorTheme="#34C759"
-                        onClick={() => onOpenChart('ebit', 'EBIT Trend (Blue R2 Y40-Y46)', ROUND_INDICES.blue2, '#34C759')} />
-                    
-                    <MetricCard title="Market Share" value="20%" subtext="Units capture" trend="+1%" isPositive={true} colorTheme="#A855F7"
-                        onClick={() => onOpenChart('marketShare', 'Market Share % (Blue R2 Y40-Y46)', ROUND_INDICES.blue2, '#A855F7')} />
-                    
-                    <MetricCard title="SPI" value="811" subtext="Imitators entered" trend="-53" isPositive={false} colorTheme="#007AFF"
-                        onClick={() => onOpenChart('spi', 'SPI Trend (Blue R2 Y40-Y46)', ROUND_INDICES.blue2, '#007AFF')} />
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div className="glass-card no-hover p-8 border-l-4 border-l-[#00F0FF]">
-                        <h3 className="title-black text-xl mb-4">Part 1: Volume Growth Overview</h3>
-                        <div className="h-64 w-full relative">
-                            <ChartComponent 
-                                type="bar" 
-                                data={{
-                                    labels: ['Y44 (Launch)', 'Y45', 'Y46'],
-                                    datasets: [{ label: 'Blue Box Volume (KU)', data: [345, 1013, 1359], backgroundColor: '#00F0FF', borderRadius: 4 }]
-                                }} 
-                                id="volB2" 
-                            />
-                        </div>
-                    </div>
-                    
-                    <div className="glass-card no-hover p-8 bg-cyan-50/10">
-                        <h3 className="title-black text-xl mb-4 text-[#00F0FF]">Context & Outcomes</h3>
-                        <ul className="space-y-2 text-sm text-text-main">
-                            <li><b className="title-black">Status:</b> Product validated. Focus shifts to market capture before imitators scale.</li>
-                            <li><b className="title-black">Competitors:</b> Shiny & Yellow Bananas launch Blue copycats, causing temporary SPI dip.</li>
-                            <li><b className="title-black">Outcome:</b> Survived entry by aggressively dropping price and expanding geographic reach (Starland).</li>
-                            <li className="mt-4 pt-3 border-t border-cyan-200/50"><b className="text-text-title">Lesson:</b> Right price unlocks demand faster than adding features. Shift budget decisively to Marketing/Sales once product is ready.</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div className="mt-8">
-                    <SectionHeader title="Part 2: Decision Making (Refining the Offering)" subtitle="Y45 to Y46" />
-                    <DataTable 
-                        columns={["Parameter", "Y45", "Y46", "Action", "Strategic Rationale"]}
-                        highlightCol={3}
-                        data={[
-                            ["Price", "$299", "$269", "REDUCE", "Simulation flagged 'price too high'. Lowering price triggered mass adoption and blocked copycats."],
-                            ["Starland Coverage", "10%", "40%", "RAISE", "Geographical expansion is critical to capture the ocean globally."],
-                            ["Unnecessary Features", "Mid", "Level 1", "ELIMINATE", "Cut 'Space-saving' and others that don't drive value for Path 3/5 to protect margins."],
-                            ["Production Plan", "650 KU", "1,500+ KU", "Scale Up", "Aligning production closer to actual soaring demand to avoid stockouts."]
-                        ]}
-                    />
-                </div>
-
-                <PerformanceSection pieYears={['Y40', 'Y44', 'Y46']} lineIndices={ROUND_INDICES.blue2} sectionId="b2" />
-            </div>
-        );
-
-        const Blue3View = ({ onOpenChart }) => (
-            <div className="space-y-8 animate-[fadeIn_0.5s_ease-out]">
-                 <div className="flex items-center gap-6 mb-8">
-                    <div className="levitate"><BlueBoxModel /></div>
-                    <div>
-                        <h2 className="text-4xl title-black bg-gradient-text">BLUE ROUND 3 (Y47 - Y49)</h2>
-                        <p className="text-text-main font-medium mt-1">Market Dominance via Service & Delivery.</p>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <MetricCard title="SPI Final" value="1,156" subtext="Market Leader" trend="+363" isPositive={true} colorTheme="#007AFF"
-                        onClick={() => onOpenChart('spi', 'Final SPI Trend (Y40-Y49)', ROUND_INDICES.blue3, '#007AFF')} />
-                    
-                    <MetricCard title="Market Share" value="40.4%" subtext="Dominant position" trend="+13%" isPositive={true} colorTheme="#A855F7"
-                        onClick={() => onOpenChart('marketShare', 'Market Share % (Y40-Y49)', ROUND_INDICES.blue3, '#A855F7')} />
-                    
-                    <MetricCard title="Revenues" value="$1.758B" subtext="Record High" trend="+86%" isPositive={true} colorTheme="#FACC15"
-                        onClick={() => onOpenChart('revenue', 'Revenues Trend (Y40-Y49)', ROUND_INDICES.blue3, '#FACC15')} />
-                    
-                    <MetricCard title="Total EBIT" value="$401M" subtext="Record Profit" trend="+153%" isPositive={true} colorTheme="#34C759"
-                        onClick={() => onOpenChart('ebit', 'Total EBIT Trend (Y40-Y49)', ROUND_INDICES.blue3, '#34C759')} />
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div className="glass-card no-hover p-8 border-l-4 border-l-[#0052CC]">
-                        <h3 className="title-black text-xl mb-4">Part 1: Context & Strategy</h3>
-                        <p className="text-sm text-text-main mb-4">
-                            <b className="title-black">Status:</b> Blue Ocean turning Red. Year 47 competitors successfully copied hardware. <br/>
-                            <b className="title-black">Action:</b> Shift from Product to <b className="title-black">Service and Delivery</b> (Path 4). Build an impenetrable moat.
-                        </p>
-                        <div className="h-64 w-full relative mt-4">
-                            <ChartComponent 
-                                type="pie" 
-                                data={{
-                                    labels: ['Blue Buddies (40.4%)', 'Shiny Apple (18%)', 'Purple Plum (18.6%)', 'Yellow Bananas (23%)'],
-                                    datasets: [{ data: [40.4, 18, 18.6, 23], backgroundColor: ['#007AFF', '#8E8E93', '#A855F7', '#FACC15'], borderWidth: 0 }]
-                                }} 
-                                id="msChart3" 
-                            />
-                        </div>
-                    </div>
-                    
-                    <div className="glass-card no-hover p-8 bg-blue-50/10">
-                        <h3 className="title-black text-xl mb-4 text-[#0052CC]">Outcomes & Learning</h3>
-                        <ul className="space-y-3 text-sm text-text-main">
-                            <li><b className="title-black">Absolute Dominance:</b> #1 unit market share (40.4%). SPI skyrocketed to 1,156.</li>
-                            <li><b className="title-black">Moat Built:</b> By investing in Service, competitors với chỉ sản phẩm mô phỏng (product-clones) couldn't match the holistic customer experience.</li>
-                            <li><b className="title-black">Profit Machine:</b> Unit cost stabilized at $118 while volume hit 5.08M units. Total EBIT hit $401M.</li>
-                            <li className="mt-4 pt-3 border-t border-blue-200/50"><b className="text-text-title">Ultimate Lesson:</b> Blue Oceans are temporary. You must continuously innovate—moving from Product to Service/Delivery—to keep competitors irrelevant.</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div className="mt-8">
-                    <SectionHeader title="Part 2: Decision Making" subtitle="Creating the Service Moat" />
-                    <DataTable 
-                        columns={["Parameter", "Y47-Y49 Decision", "Action", "Strategic Rationale"]}
-                        highlightCol={2}
-                        data={[
-                            ["Price", "$249", "Final Drop", "Pushed price to minimum threshold to maximize non-customer conversion and block new entrants."],
-                            ["Starland Coverage", "100%", "MAX", "Full global deployment. Capitalize on the developed market."],
-                            ["Corp. Project (N)", "Leadership & Service", "INVEST", "Radically upgrading customer contact center. Vital when selling to non-tech-savvy noncustomers."],
-                            ["Corp. Project (P)", "Expert Trainers", "INVEST", "Train retail staff. They must know how to sell a 'non-console' to a 'non-gamer'."],
-                            ["Production", "5,450 KU", "Match", "Finally aligned production scale precisely with marketing-driven demand. Minimal penalties."]
-                        ]}
-                    />
-                </div>
-
-                <PerformanceSection pieYears={['Y40', 'Y47', 'Y49']} lineIndices={ROUND_INDICES.blue3} sectionId="b3" />
-            </div>
-        );
-
-        // ==========================================
-        // NEW TAB: CONCLUSION / KEY TAKEAWAYS
-        // ==========================================
-        const ConclusionView = ({ onOpenYearDetail }) => {
-            
+        const IntroView = ({ onOpenChart, onOpenYearDetail }) => {
             const chartConfig = {
                 labels: METRIC_DATA.labels,
                 datasets: [
@@ -948,17 +785,17 @@
                     {
                         label: 'Red Box (Planned KU)',
                         data: [2200, 2300, 2300, 2100, 550, 1400, 1500, 1100, 800, 400],
-                        borderColor: '#7F1D1D', // Darker and harder red tone
-                        borderWidth: 3, // Bolder line
-                        borderDash: [6, 4], // Dashed style to represent 'Plan'
-                        pointRadius: 6, // Bigger markers
+                        borderColor: '#7F1D1D', 
+                        borderWidth: 3, 
+                        borderDash: [6, 4], 
+                        pointRadius: 6, 
                         pointHoverRadius: 8,
-                        pointBackgroundColor: '#FFFFFF', // Contrast dot
+                        pointBackgroundColor: '#FFFFFF', 
                         pointBorderColor: '#7F1D1D',
                         pointBorderWidth: 3,
                         type: 'line',
                         fill: false,
-                        order: 1 // Ensure line is rendered on top of bars
+                        order: 1 
                     },
                     {
                         label: 'Blue Box (Actual KU)',
@@ -972,91 +809,69 @@
                     {
                         label: 'Blue Box (Planned KU)',
                         data: [0, 0, 0, 0, 900, 650, 1500, 2000, 2730, 5450],
-                        borderColor: '#1E3A8A', // Darker and harder blue tone
-                        borderWidth: 3, // Bolder line
-                        borderDash: [6, 4], // Dashed style to represent 'Plan'
-                        pointRadius: 6, // Bigger markers
+                        borderColor: '#1E3A8A', 
+                        borderWidth: 3, 
+                        borderDash: [6, 4], 
+                        pointRadius: 6, 
                         pointHoverRadius: 8,
-                        pointBackgroundColor: '#FFFFFF', // Contrast dot
+                        pointBackgroundColor: '#FFFFFF', 
                         pointBorderColor: '#1E3A8A',
                         pointBorderWidth: 3,
                         type: 'line',
                         fill: false,
-                        order: 1 // Ensure line is rendered on top of bars
+                        order: 1 
                     }
                 ]
             };
-
+            
             return (
-                <div className="space-y-12 animate-[fadeIn_0.5s_ease-out]">
-                    <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-6">
-                            <div className="levitate"><BlueBoxModel /></div>
-                            <div>
-                                <h2 className="text-4xl title-black bg-gradient-text">KEY TAKEAWAYS</h2>
-                                <p className="text-text-main font-medium mt-1">Blue Ocean Strategy Business Game Overview</p>
-                            </div>
+                <div className="space-y-10 animate-[fadeIn_0.5s_ease-out] relative">
+                    <div className="absolute top-0 right-0 opacity-10 pointer-events-none levitate" style={{filter: 'blur(10px)', transform: 'scale(3)'}}>
+                        <BlueBuddiesLogo className="w-64 h-64" />
+                    </div>
+
+                    <div className="glass-card no-hover p-10 text-center relative z-10">
+                        <h1 className="text-5xl title-black bg-gradient-text mb-4">BLUE OCEAN STRATEGY SIMULATION</h1>
+                        <p className="text-xl text-text-main">A 9-Year Journey from Red Ocean Survival to Blue Ocean Dominance.</p>
+                    </div>
+
+                    {/* Global Metrics (Y49 vs Y40) */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <MetricCard title="Share Price Index" value="1,156" subtext="Y49 vs Y40 (1,000)" trend="+156 pts" isPositive={true} colorTheme="#007AFF"
+                            onClick={() => onOpenChart('spi', 'SPI Trend (Y40-Y49)', ROUND_INDICES.intro, '#007AFF', 'line')} />
+                        <MetricCard title="Total Revenue" value="$1.76B" subtext="Y49 vs Y40 ($926M)" trend="+$832M" isPositive={true} colorTheme="#FACC15" 
+                            onClick={() => onOpenChart('revenue', 'Total Revenue Trend ($M)', ROUND_INDICES.intro, '#FACC15', 'line')} />
+                        <MetricCard title="Market Share" value="40.4%" subtext="Y49 vs Y40 (22%)" trend="+18.4 pts" isPositive={true} colorTheme="#A855F7" 
+                            onClick={() => onOpenChart('marketShare', 'Market Share Trend (%)', ROUND_INDICES.intro, '#A855F7', 'line')} />
+                        <MetricCard title="Total EBIT" value="$401M" subtext="Y49 vs Y40 ($366M)" trend="+$35M" isPositive={true} colorTheme="#34C759" 
+                            onClick={() => onOpenChart('ebit', 'Total EBIT Trend ($M)', ROUND_INDICES.intro, '#34C759', 'line')} />
+                    </div>
+
+                    <SectionHeader title="The Big Four Competitors" subtitle="Context of the Industry" />
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative z-10">
+                        <div className="glass-card no-hover p-6 flex flex-col items-center text-center">
+                            <div className="levitate mb-4"><BlueBuddiesLogo/></div>
+                            <h3 className="title-black text-lg mb-2">Blue Buddies</h3>
+                            <p className="text-sm text-text-main">Holding strong cash flow from the Red Box, but burdened by outdated features and a loss of segment focus.</p>
                         </div>
-                        <div className="hidden lg:flex text-sm text-gray-400 items-center gap-2 animate-pulse pr-4">
-                            Scroll to explore
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                        <div className="glass-card no-hover p-6 flex flex-col items-center text-center">
+                            <div className="levitate mb-4" style={{animationDelay: '1s'}}><ShinyAppleLogo/></div>
+                            <h3 className="title-black text-lg mb-2">Shiny Apple</h3>
+                            <p className="text-sm text-text-main">The market share leader, dominating in premium R&D and high pricing, but suffering from crushing unit costs.</p>
+                        </div>
+                        <div className="glass-card no-hover p-6 flex flex-col items-center text-center">
+                            <div className="levitate mb-4" style={{animationDelay: '2s'}}><PurplePlumLogo/></div>
+                            <h3 className="title-black text-lg mb-2">Purple Plum</h3>
+                            <p className="text-sm text-text-main">Holding absolute dominance in the core 22-35 age demographic, while completely ignoring the 36+ segment and non-customers.</p>
+                        </div>
+                        <div className="glass-card no-hover p-6 flex flex-col items-center text-center">
+                            <div className="levitate mb-4" style={{animationDelay: '3s'}}><YellowBananaLogo/></div>
+                            <h3 className="title-black text-lg mb-2">Yellow Bananas</h3>
+                            <p className="text-sm text-text-main">Securing high volume share through low-cost market penetration, engaging in brutal price wars resulting in razor-thin profit margins.</p>
                         </div>
                     </div>
 
-                    {/* Horizontal Scrolling Row for all 6 items */}
-                    <div className="flex flex-nowrap overflow-x-auto no-scrollbar gap-4 pb-8 items-stretch w-full snap-x" style={{ scrollSnapType: 'x mandatory' }}>
-                        
-                        {/* Point 1 */}
-                        <div className="glass-card no-hover p-6 border-t-4 border-t-[#007AFF] min-w-[340px] flex-1 flex flex-col snap-start">
-                            <h3 className="title-black text-lg mb-4">1. Marketing investment is non-negotiable</h3>
-                            <p className="text-sm text-text-main leading-relaxed">Underspending on marketing in the Red Round caused market share to drop from 21% to 12%. Recovery only happened when marketing spend increased to $70K+. In a Blue Ocean launch, if noncustomers don't know your product exists, even the best strategy fails.</p>
-                        </div>
-
-                        {/* Point 2 */}
-                        <div className="glass-card no-hover p-6 border-t-4 border-t-[#A855F7] min-w-[340px] flex-1 flex flex-col snap-start">
-                            <h3 className="title-black text-lg mb-4">2. Segment clarity must drive product decisions</h3>
-                            <p className="text-sm text-text-main leading-relaxed">Clearly identifying what Path 3 (parents) and Path 5 (social adults) wanted — and building exclusively around those needs — was the foundation of Blue Box's success. Every time we invested in factors outside our target segments, the simulation penalized us with "exceeds market expectations — lost margin without additional sales."</p>
-                        </div>
-
-                        {/* Point 3 */}
-                        <div className="glass-card no-hover p-6 border-t-4 border-t-[#34C759] min-w-[340px] flex-1 flex flex-col snap-start">
-                            <h3 className="title-black text-lg mb-4">3. Corporate projects are growth enablers</h3>
-                            <p className="text-sm text-text-main leading-relaxed">Launching cost reduction projects (A, B, D, J) during the Red Round reduced unit cost from $177 to $127 before Blue Box even launched. When combined with production scale-up, volume-based COGS reduction brought unit cost further down to $118 — a 33% total reduction. Preparing infrastructure before expansion creates the conditions for sustainable growth.</p>
-                        </div>
-
-                        {/* Point 4 */}
-                        <div className="glass-card no-hover p-6 border-t-4 border-t-[#FACC15] min-w-[340px] flex-1 flex flex-col snap-start">
-                            <h3 className="title-black text-lg mb-4">4. Differentiate through service, not features</h3>
-                            <p className="text-sm text-text-main leading-relaxed">Year 46-47 competitors copied product, share price dipped 864 to 793. Service pivot (Path 4) drove recovery 793 to 1,156. Unit cost stayed controlled at $118.</p>
-                        </div>
-
-                        {/* Point 5 */}
-                        <div className="glass-card no-hover p-6 border-t-4 border-t-[#FF3B30] min-w-[450px] flex-1 flex flex-col snap-start">
-                            <h3 className="title-black text-lg mb-4">5. Production planning accuracy is a profit lever</h3>
-                            <div className="mb-4 flex-grow w-full">
-                                <DataTable
-                                    columns={["Year", "Plan", "Actual Demand", "Penalty"]}
-                                    highlightCol={3}
-                                    data={[
-                                        ["Y44", "900 KU", "345 KU", "$7.5M"],
-                                        ["Y45", "650 KU", "1,013 KU", "$2.7M"],
-                                        ["Y48", "2,730 KU", "3,649 KU", "$13.9M"],
-                                        ["Y49", "5,450 KU", "5,086 KU", "$2.6M"]
-                                    ]}
-                                />
-                            </div>
-                            <p className="text-sm text-text-main font-medium leading-relaxed mt-2">Total Penalty: $26.7M, total avoidable. Always based on historical of actual demand to plan in production when there’s a motivation to grow (price decrease, salesforce, additional promotion, aftersales service).</p>
-                        </div>
-
-                        {/* Point 6 */}
-                        <div className="glass-card no-hover p-6 border-t-4 border-t-[#00F0FF] min-w-[340px] flex-1 flex flex-col snap-start">
-                            <h3 className="title-black text-lg mb-4">6. Price is a noncustomer unlock</h3>
-                            <p className="text-sm text-text-main leading-relaxed">The simulation flagged "price too high" for four consecutive years (Y44-Y47) while the team reduced price only gradually. Non-customers have a fixed price threshold, when price dropped from $269 to $249 in Year 48, demand jumped from 1,886 KU to 3,649 KU (+93% YoY). In Blue Ocean, price doesn't just affect margin, it determines whether the mass of noncustomers will cross the threshold and buy.</p>
-                        </div>
-
-                    </div>
-
-                    {/* New Interactive Bar Chart Section */}
                     <div className="glass-card no-hover p-8 border-t border-gray-200/50 mt-10">
                         <SectionHeader 
                             title="Product Volumes Overview (Y40 - Y49)" 
@@ -1075,7 +890,6 @@
                                 }}
                                 onElementClick={(index) => onOpenYearDetail(index)} 
                             />
-                            {/* Hover overlay hint */}
                             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                                 <div className="bg-white/80 backdrop-blur-sm text-gray-800 font-bold px-4 py-2 rounded-full shadow-lg border border-white">
                                     Click bars for yearly split details
@@ -1083,7 +897,408 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            );
+        };
 
+        const RedRoundView = ({ onOpenChart, onOpenSegment }) => (
+            <div className="space-y-8 animate-[fadeIn_0.5s_ease-out]">
+                <div className="flex items-center gap-6 mb-8">
+                    <RedBoxModel />
+                    <div>
+                        <h2 className="text-4xl title-black text-[#FF3B30]">RED ROUND (Y41 - Y43)</h2>
+                        <p className="text-text-main font-medium mt-1">Defending the core, preparing for the leap.</p>
+                    </div>
+                </div>
+
+                {/* Part 1: Context */}
+                <div className="glass-card no-hover p-8 border-l-4 border-l-[#FF3B30]">
+                    <h3 className="title-black text-xl mb-4">Part 1: Context & Market Landscape</h3>
+                    <p className="text-sm text-text-main mb-3">Our initial strategy was defensive: protect Red Box profits while building a budget for the future Blue Box launch in Year 44.</p>
+                    <ul className="space-y-2 text-sm text-text-main list-disc pl-4 mt-2">
+                        <li><b className="title-black">The Mature Product Dilemma:</b> Red Box was a mature product. Spending heavily to improve it made little sense, since it would be replaced in Year 44.</li>
+                        <li><b className="title-black">Budget Constraints:</b> We operated with a tight budget (~$210M), with marketing and sales force already using most of it. So the goal was to keep our profit strong and hold market share.</li>
+                        <li><b className="title-black">Competitor Actions:</b> Shiny Station maintained dominance in 36+, while Purple Player aggressively overtook the 22-35 segment.</li>
+                    </ul>
+                </div>
+
+                {/* Part 2: Targeting segment & Decision Making */}
+                <div className="mt-8">
+                    <div className="flex justify-between items-center mb-6">
+                        <SectionHeader title="Part 2: Targeting & Decision Making" subtitle="Key changes from Control Year (Y42) to Decision Year (Y43)" />
+                        <button onClick={() => onOpenSegment('red')} className="px-5 py-2 rounded-full text-sm font-bold bg-red-50 text-[#FF3B30] border border-red-200 hover:bg-red-100 flex items-center gap-2 shadow-sm transition-all hover:scale-105">
+                            🎯 Target Strategy Rationale
+                        </button>
+                    </div>
+                    <DataTable 
+                        columns={["Parameter", "Control (Year 42)", "Decision (Year 43)", "Action", "Strategic Rationale"]}
+                        data={[
+                            ["Segment Focus", "36+ (45%)", "22-35 (65%)", "Pivot", "Attempted to escape Shiny Station by chasing a younger market, but failed to build a product strong enough to win against Purple Player."],
+                            ["Price", "$399", "$379", "Reduce", "Slight reduction to stimulate demand and push volume in new target, but insufficient to offset weak features."],
+                            ["Marketing", "$50M", "$10M", "Fatal Error", "Data entry error. Intended $100M but typed $10M. Cost us a full year of marketing and lost 90% reach."],
+                            ["Production Plan", "2,300 KU", "2,100 KU", "Reduce", "Held near prior-year volume but still too high vs demand. Over-production led to a massive penalty."],
+                            ["Graphics / Audio", "75 Mb / 2", "75 Mb / 2", "Hold", "Kept low to save costs, but still not serving what the 36+ segment truly values."],
+                            ["Online / Multi", "20 / 3", "70 / 7", "Raise", "Raised sharply for 22-35 segment; however, couldn't beat Purple Player's absolute dominance."],
+                            ["Corporate Proj.", "A (Mfg), J (Cost)", "A (Mfg), J (Cost)", "Hold", "Maintained cost-reduction projects to lift EBIT and prepare infrastructure for the future."],
+                            ["Geography", "StarLand 20%", "StarLand 10%", "Reduce", "Pulled back from premium StarLand to stay where Red Box is traditionally strong."]
+                        ]}
+                    />
+                </div>
+
+                {/* Part 3: Outcome */}
+                <div className="mt-8 border-t border-gray-200/50 pt-8">
+                    <SectionHeader title="Part 3: Outcomes" subtitle="Financial & Operational Results (Y43 vs Y40)" />
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                        <div className="lg:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <MetricCard title="SPI" value="623" subtext="Y43 vs Y40 (1000)" trend="-377 pts" isPositive={false} colorTheme="#FF3B30"
+                                onClick={() => onOpenChart('spi', 'SPI Trend (Y40-Y43)', ROUND_INDICES.red, '#FF3B30', 'line')} />
+                            <MetricCard title="Total Revenue" value="$500M" subtext="Y43 vs Y40 ($926M)" trend="-$426M" isPositive={false} colorTheme="#FACC15"
+                                onClick={() => onOpenChart('revenue', 'Revenue Trend ($M)', ROUND_INDICES.red, '#FACC15', 'line')} />
+                            <MetricCard title="Market Share" value="12%" subtext="Y43 vs Y40 (22%)" trend="-10 pts" isPositive={false} colorTheme="#A855F7"
+                                onClick={() => onOpenChart('marketShare', 'Market Share Trend (%)', ROUND_INDICES.red, '#A855F7', 'line')} />
+                            <MetricCard title="Total EBIT" value="$152M" subtext="Y43 vs Y40 ($366M)" trend="-$214M" isPositive={false} colorTheme="#34C759"
+                                onClick={() => onOpenChart('ebit', 'Total EBIT Trend ($M)', ROUND_INDICES.red, '#34C759', 'line')} />
+                        </div>
+                        <div className="lg:col-span-1">
+                            <ProductionBox data={PRODUCTION_HISTORY.red} />
+                        </div>
+                    </div>
+                    <MarketSharePies years={['Y40', 'Y41', 'Y42', 'Y43']} />
+                    <ProsConsBox 
+                        pros={["Saved budget for future Blue Ocean launch.", "Initiated cost-reduction corporate projects (A & J)."]} 
+                        cons={["Fatal data entry error ($10M instead of $100M) lost 90% visibility.", "Misaligned specs with target segments.", "Massive inventory penalties ($25M) due to over-forecasting."]} 
+                    />
+                </div>
+
+                {/* Part 4: Lessons Learnt */}
+                <div className="glass-card no-hover p-8 bg-red-50/10 mt-8">
+                    <h3 className="title-black text-xl mb-4 text-[#FF3B30]">Part 4: Lessons Learnt & Key Takeaways</h3>
+                    <ul className="space-y-3 text-sm text-text-main list-disc pl-4 mt-2">
+                        <li><b className="title-black">Match the product to the group you target:</b> In Y42 we aimed at 36+ but cut the graphics & audio they value most. If you focus on a group, give them what they want.</li>
+                        <li><b className="title-black">Price and product must agree:</b> We cut quality but kept price at $399. A weaker product at the same price gives customers no reason to buy.</li>
+                        <li><b className="title-black">Stay consistent - don't switch targets blindly:</b> In Y43 we jumped from 36+ to 22-35 without a product strong enough to beat Purple Player, who already owned that group.</li>
+                        <li><b className="title-black">Verify every number before submitting:</b> A single missing zero ($100M → $10M) cost us a full year of marketing reach. Always double-check inputs.</li>
+                        <li><b className="title-black">Plan production from real demand:</b> Two years of over-planning (2,300 & 2,100 KU vs ~1,500 sold) cost $25M in avoidable penalties.</li>
+                    </ul>
+                </div>
+            </div>
+        );
+
+        const Blue1View = ({ onOpenChart, onOpenSegment }) => (
+            <div className="space-y-8 animate-[fadeIn_0.5s_ease-out]">
+                <div className="flex items-center justify-between glass-card no-hover p-6 mb-8 bg-gradient-to-r from-white/20 to-blue-50/30">
+                    <div className="flex items-center gap-4 opacity-50 grayscale"><RedBoxModel/><span className="title-black text-sm">Legacy</span></div>
+                    <div className="flex-1 px-8 text-center"><div className="h-1 bg-gradient-to-r from-gray-300 to-[#00F0FF] relative"><div className="absolute right-0 -top-2 w-0 h-0 border-t-8 border-b-8 border-l-8 border-transparent border-l-[#00F0FF]"></div></div></div>
+                    <div className="flex items-center gap-4"><div className="levitate"><BlueBoxModel/></div><span className="title-black text-lg text-[#007AFF]">The Future</span></div>
+                </div>
+
+                {/* Part 1: Context */}
+                <div className="glass-card no-hover p-8 border-l-4 border-l-[#007AFF]">
+                    <h3 className="title-black text-xl mb-4">Part 1: Context & Market Landscape</h3>
+                    <p className="text-sm text-text-main mb-3"><b className="title-black">Status:</b> Red Box fading fast. Time to execute Value Innovation (ERRC) and launch Blue Box.</p>
+                    <ul className="space-y-2 text-sm text-text-main list-disc pl-4 mt-2">
+                        <li><b className="title-black">Red Ocean Exhaustion:</b> The traditional gaming segments (22-35 and 36+) were heavily contested by Purple Plum and Shiny Apple. Price wars eroded margins.</li>
+                        <li><b className="title-black">Cost Advantage Secured:</b> Corporate projects (A, B, D, J) launched during the Red Round successfully cut unit cost from $177 to $127 before Blue Box even launched.</li>
+                    </ul>
+                </div>
+
+                {/* Part 2: Targeting segment & Decision Making */}
+                <div className="mt-8">
+                    <div className="flex justify-between items-center mb-6">
+                        <SectionHeader title="Part 2: Targeting & Decision Making" subtitle="Executing the ERRC Grid (Y43 vs Y44)" />
+                        <button onClick={() => onOpenSegment('blue12')} className="px-5 py-2 rounded-full text-sm font-bold bg-blue-50 text-[#007AFF] border border-blue-200 hover:bg-blue-100 flex items-center gap-2 shadow-sm transition-all hover:scale-105">
+                            🎯 Target Strategy Rationale
+                        </button>
+                    </div>
+                    <DataTable 
+                        columns={["Parameter", "Control (Year 43)", "Decision (Year 44)", "Action", "Strategic Rationale"]}
+                        data={[
+                            ["Target Segment", "22-35 (65%)", "Path 3 & Path 5", "Pivot", "Moved away from contested traditional gamers to target non-customers (Parents & Social Adults)."],
+                            ["Price", "$379", "$299", "Reduce", "Strategic Pricing. Set low to unlock mass non-customer demand and overcome adoption hurdles."],
+                            ["Marketing", "$10M (Error)", "$70M+", "Scale Up", "Marketing investment is non-negotiable for a Blue Ocean launch. Non-customers must know the product exists."],
+                            ["Production Plan", "2,100 KU", "900 KU (Blue)", "Create", "Optimistic launch plan for Blue Box. Unfortunately, actual demand was 345k leading to a $7.5M penalty."],
+                            ["Graphics / Power", "Level 70+", "Level 1 / 2", "Reduce", "Traded expensive processors to reduce unit cost. Target segments do not value hardcore specs."],
+                            ["Ease of Use/Motion", "Low", "Level 5 & 4", "Raise", "Raised Ease of Use (Lvl 5) and Motion Control (Lvl 4). Critical for non-gamers to play without frustration."],
+                            ["Family / Social", "Low", "Level 5 (Max)", "Create", "Shift focus from solitary dark-room gaming to living room social experiences."],
+                            ["Corporate Proj.", "A (Mfg), J (Cost)", "B (Six Sigma)", "Create", "Implemented Six Sigma to optimize bottom line and significantly reduce Base Unit Cost (from $177 to $127)."]
+                        ]}
+                    />
+                </div>
+
+                {/* Part 3: Outcome */}
+                <div className="mt-8 border-t border-gray-200/50 pt-8">
+                    <SectionHeader title="Part 3: Outcomes" subtitle="Financial & Operational Results (Y44 vs Y43)" />
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                        <div className="lg:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <MetricCard title="SPI" value="809" subtext="Y44 vs Y43 (623)" trend="+186 pts" isPositive={true} colorTheme="#007AFF"
+                                onClick={() => onOpenChart('spi', 'SPI Trend (Y40-Y44)', ROUND_INDICES.blue1, '#007AFF', 'line')} />
+                            <MetricCard title="Total Revenue" value="$773M" subtext="Y44 vs Y43 ($500M)" trend="+$273M" isPositive={true} colorTheme="#FACC15"
+                                onClick={() => onOpenChart('revenue', 'Revenue Trend ($M)', ROUND_INDICES.blue1, '#FACC15', 'line')} />
+                            <MetricCard title="Market Share" value="15%" subtext="Y44 vs Y43 (12%)" trend="+3 pts" isPositive={true} colorTheme="#A855F7"
+                                onClick={() => onOpenChart('marketShare', 'Market Share Trend (%)', ROUND_INDICES.blue1, '#A855F7', 'line')} />
+                            <MetricCard title="Total EBIT" value="$132M" subtext="Y44 vs Y43 ($152M)" trend="-$20M" isPositive={false} colorTheme="#34C759"
+                                onClick={() => onOpenChart('ebit', 'Total EBIT Trend ($M)', ROUND_INDICES.blue1, '#34C759', 'line')} />
+                        </div>
+                        <div className="lg:col-span-1">
+                            <ProductionBox data={PRODUCTION_HISTORY.blue1} />
+                        </div>
+                    </div>
+                    <MarketSharePies years={['Y43', 'Y44']} />
+                    <ProsConsBox 
+                        pros={["Successfully tapped non-customers (SPI rebounded +186 pts).", "Reduced Base Unit Cost from $177 to $127.", "High marketing spend secured market awareness."]} 
+                        cons={["Severe Blue Box net loss (-$64.7M EBIT) due to heavy launch costs.", "Production penalty ($7.5M) for over-estimating Day 1 adoption."]} 
+                    />
+                </div>
+
+                {/* Part 4: Lessons Learnt */}
+                <div className="glass-card no-hover p-8 bg-blue-50/10 mt-8">
+                    <h3 className="title-black text-xl mb-4 text-[#007AFF]">Part 4: Lessons Learnt & Key Takeaways</h3>
+                    <ul className="space-y-3 text-sm text-text-main list-disc pl-4 mt-2">
+                        <li><b className="title-black">LEARNING 1: VALUE INNOVATION REQUIRES RUTHLESSNESS:</b> Force Unit Cost below $120 by aggressively dropping legacy specs that do not drive buyer value.</li>
+                        <li><b className="title-black">LEARNING 2: STRATEGIC PRICING & SCALABILITY:</b> Implement strategic pricing models designed to capture the mass of target buyers rapidly.</li>
+                        <li><b className="title-black">LEARNING 3: DEFENSIVE PRODUCTION PLANNING:</b> Anchor production volume to Y44 actual sell-through data to stop penalty bleeding and inventory bloat.</li>
+                    </ul>
+                </div>
+            </div>
+        );
+
+        const Blue2View = ({ onOpenChart, onOpenSegment }) => (
+            <div className="space-y-8 animate-[fadeIn_0.5s_ease-out]">
+                 <div className="flex items-center gap-6 mb-8">
+                    <div className="levitate"><BlueBoxModel /></div>
+                    <div>
+                        <h2 className="text-4xl title-black text-[#00F0FF]">BLUE ROUND 2 (Y45 - Y46)</h2>
+                        <p className="text-text-main font-medium mt-1">Scaling to Market Leadership.</p>
+                    </div>
+                </div>
+
+                {/* Part 1: Context */}
+                <div className="glass-card no-hover p-8 border-l-4 border-l-[#00F0FF]">
+                    <h3 className="title-black text-xl mb-4">Part 1: Context & Market Landscape</h3>
+                    <p className="text-sm text-text-main mb-3">Our strategy in Blue 2 was clear: unlock further demand through strategic pricing and commercial scaling.</p>
+                    <ul className="space-y-2 text-sm text-text-main list-disc pl-4 mt-2">
+                        <li><b className="title-black">Product Validation:</b> Non-customers widely accepted the new ERRC value proposition. Focus shifted from R&D to scaling.</li>
+                        <li><b className="title-black">Competitor Mimicry:</b> Shiny Apple and Yellow Bananas began launching their own Blue copycats, threatening to drag the new space into a red ocean.</li>
+                    </ul>
+                </div>
+
+                {/* Part 2: Targeting segment & Decision Making */}
+                <div className="mt-8">
+                    <div className="flex justify-between items-center mb-6">
+                        <SectionHeader title="Part 2: Targeting & Decision Making" subtitle="Refining the Offering (Y44 vs Y45-46)" />
+                        <button onClick={() => onOpenSegment('blue12')} className="px-5 py-2 rounded-full text-sm font-bold bg-cyan-50 text-[#00F0FF] border border-cyan-200 hover:bg-cyan-100 flex items-center gap-2 shadow-sm transition-all hover:scale-105">
+                            🎯 Target Strategy Rationale
+                        </button>
+                    </div>
+                    <DataTable 
+                        columns={["Parameter", "Control (Year 44)", "Decision (Year 45-46)", "Action", "Strategic Rationale"]}
+                        data={[
+                            ["Price", "$299", "$269", "Reduce", "Targeting 100% Non-customers. Lowering price triggered mass adoption and blocked early copycats."],
+                            ["Starland Coverage", "10%", "40%", "Raise", "Geographical expansion is critical to capture the ocean globally. Shifted budget to expand reach."],
+                            ["Dev Spending", "$43.7M", "$2.7M", "Cut", "Product reached maturity, successfully shifted to commercialization mode."],
+                            ["Sales / Marketing", "$65M", "$125M", "Scale Up", "Aggressively scaled marketing and sales force to drive deep market penetration for the Blue Box."],
+                            ["Unnecessary Features", "Mid", "Level 1", "Eliminate", "Cut space-saving footprint and reconfigurable batteries that don't drive value for Path 3/5 to protect margins."],
+                            ["Production Plan", "900 KU", "1,500+ KU", "Scale Up", "Aligning production closer to actual soaring demand to avoid severe stockouts."]
+                        ]}
+                    />
+                </div>
+
+                {/* Part 3: Outcome */}
+                <div className="mt-8 border-t border-gray-200/50 pt-8">
+                    <SectionHeader title="Part 3: Outcomes" subtitle="Financial & Operational Results (Y46 vs Y44)" />
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                        <div className="lg:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <MetricCard title="SPI" value="811" subtext="Y46 vs Y44 (809)" trend="+2 pts" isPositive={true} colorTheme="#007AFF"
+                                onClick={() => onOpenChart('spi', 'SPI Trend (Y40-Y46)', ROUND_INDICES.blue2, '#007AFF', 'line')} />
+                            <MetricCard title="Total Revenue" value="$900M" subtext="Y46 vs Y44 ($773M)" trend="+$127M" isPositive={true} colorTheme="#FACC15"
+                                onClick={() => onOpenChart('revenue', 'Revenue Trend ($M)', ROUND_INDICES.blue2, '#FACC15', 'line')} />
+                            <MetricCard title="Market Share" value="20%" subtext="Y46 vs Y44 (15%)" trend="+5 pts" isPositive={true} colorTheme="#A855F7"
+                                onClick={() => onOpenChart('marketShare', 'Market Share Trend (%)', ROUND_INDICES.blue2, '#A855F7', 'line')} />
+                            <MetricCard title="Total EBIT" value="$155M" subtext="Y46 vs Y44 ($132M)" trend="+$23M" isPositive={true} colorTheme="#34C759"
+                                onClick={() => onOpenChart('ebit', 'Total EBIT Trend ($M)', ROUND_INDICES.blue2, '#34C759', 'line')} />
+                        </div>
+                        <div className="lg:col-span-1">
+                            <ProductionBox data={PRODUCTION_HISTORY.blue2} />
+                        </div>
+                    </div>
+                    <MarketSharePies years={['Y44', 'Y45', 'Y46']} />
+                    <ProsConsBox 
+                        pros={["Huge revenue growth (+$127M) and return to profitability.", "Scaled successfully into StarLand.", "Price reduction ($299 -> $269) triggered mass adoption."]} 
+                        cons={["Competitor mimicry began eroding differentiation.", "Missed optimal production volumes causing stockouts and minor penalties."]} 
+                    />
+                </div>
+
+                {/* Part 4: Lessons Learnt */}
+                <div className="glass-card no-hover p-8 bg-cyan-50/10 mt-8">
+                    <h3 className="title-black text-xl mb-4 text-[#00F0FF]">Part 4: Lessons Learnt & Key Takeaways</h3>
+                    <ul className="space-y-3 text-sm text-text-main list-disc pl-4 mt-2">
+                        <li><b className="title-black">LEARNING 1: Strategic Pricing &gt; Feature Wars:</b> Right price unlocks demand faster than adding features.</li>
+                        <li><b className="title-black">LEARNING 2: Invest in Commercialization:</b> Once product is ready, shift decisively to market capture.</li>
+                        <li><b className="title-black">LEARNING 3: Blue + Red Coexistence:</b> Blue Ocean growth funds itself without destroying legacy profitability.</li>
+                    </ul>
+                </div>
+            </div>
+        );
+
+        const Blue3View = ({ onOpenChart, onOpenSegment }) => (
+            <div className="space-y-8 animate-[fadeIn_0.5s_ease-out]">
+                 <div className="flex items-center gap-6 mb-8">
+                    <div className="levitate"><BlueBoxModel /></div>
+                    <div>
+                        <h2 className="text-4xl title-black bg-gradient-text">BLUE ROUND 3 (Y47 - Y49)</h2>
+                        <p className="text-text-main font-medium mt-1">Market Dominance via Service & Delivery.</p>
+                    </div>
+                </div>
+
+                {/* Part 1: Context */}
+                <div className="glass-card no-hover p-8 border-l-4 border-l-[#0052CC]">
+                    <h3 className="title-black text-xl mb-4">Part 1: Context & Market Landscape</h3>
+                    <ul className="space-y-2 text-sm text-text-main mb-4 list-disc pl-4 mt-2">
+                        <li><b className="title-black">Phase Expand (Y46-Y47):</b> Geographic expansion into Starland (10% to 40%). Competitors entered and copied hardware. Share price temporarily dipped from 864 to 793.</li>
+                        <li><b className="title-black">Phase Dominate (Y48-Y49):</b> Expand 100% to Starland with Price decrease to $249. Pivoted strategy toward service layer. Service excellence became the key factor for competitive advantage.</li>
+                    </ul>
+                </div>
+
+                {/* Part 2: Targeting segment & Decision Making */}
+                <div className="mt-8">
+                    <div className="flex justify-between items-center mb-6">
+                        <SectionHeader title="Part 2: Targeting & Decision Making" subtitle="Creating the Service Moat (Y46 vs Y48-Y49)" />
+                        <button onClick={() => onOpenSegment('blue3')} className="px-5 py-2 rounded-full text-sm font-bold bg-blue-50 text-[#0052CC] border border-blue-200 hover:bg-blue-100 flex items-center gap-2 shadow-sm transition-all hover:scale-105">
+                            🎯 Target Strategy Rationale
+                        </button>
+                    </div>
+                    <DataTable 
+                        columns={["Parameter", "Control (Year 46)", "Decision (Year 47-49)", "Action", "Strategic Rationale"]}
+                        data={[
+                            ["Price", "$269", "$249", "Final Drop", "Pushed price to minimum threshold to maximize non-customer conversion and block new entrants. Demand jumped +93% YoY."],
+                            ["Starland Coverage", "40%", "100%", "Raise", "Full global deployment. Capitalize on the fully developed market."],
+                            ["Corp. Project (N)", "-", "Invest", "Create", "Leadership & Service. Radically upgrading customer contact center. Vital when selling to non-tech-savvy noncustomers."],
+                            ["Corp. Project (P)", "-", "Invest", "Create", "Expert Trainers. Train retail staff. They must know how to sell a 'non-console' to a 'non-gamer'. Differentiate through service."],
+                            ["Production Plan", "1,500 KU", "5,450 KU", "Scale Up", "Finally aligned production scale precisely with marketing-driven demand. Minimal penalties achieved."]
+                        ]}
+                    />
+                </div>
+
+                {/* Part 3: Outcome */}
+                <div className="mt-8 border-t border-gray-200/50 pt-8">
+                    <SectionHeader title="Part 3: Outcomes" subtitle="Financial & Operational Results (Y49 vs Y46)" />
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                        <div className="lg:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <MetricCard title="SPI" value="1,156" subtext="Y49 vs Y46 (811)" trend="+345 pts" isPositive={true} colorTheme="#007AFF"
+                                onClick={() => onOpenChart('spi', 'SPI Trend (Y40-Y49)', ROUND_INDICES.blue3, '#007AFF', 'line')} />
+                            <MetricCard title="Total Revenue" value="$1.76B" subtext="Y49 vs Y46 ($900M)" trend="+$858M" isPositive={true} colorTheme="#FACC15"
+                                onClick={() => onOpenChart('revenue', 'Revenue Trend ($M)', ROUND_INDICES.blue3, '#FACC15', 'line')} />
+                            <MetricCard title="Market Share" value="40.4%" subtext="Y49 vs Y46 (20%)" trend="+20.4 pts" isPositive={true} colorTheme="#A855F7"
+                                onClick={() => onOpenChart('marketShare', 'Market Share Trend (%)', ROUND_INDICES.blue3, '#A855F7', 'line')} />
+                            <MetricCard title="Total EBIT" value="$401M" subtext="Y49 vs Y46 ($155M)" trend="+$246M" isPositive={true} colorTheme="#34C759"
+                                onClick={() => onOpenChart('ebit', 'Total EBIT Trend ($M)', ROUND_INDICES.blue3, '#34C759', 'line')} />
+                        </div>
+                        <div className="lg:col-span-1">
+                            <ProductionBox data={PRODUCTION_HISTORY.blue3} />
+                        </div>
+                    </div>
+                    <MarketSharePies years={['Y46', 'Y47', 'Y48', 'Y49']} />
+                    <ProsConsBox 
+                        pros={["Reached #1 market share (40.4%).", "Successfully built a Service Moat that competitors couldn't copy.", "Final price drop ($249) skyrocketed demand by +93%."]} 
+                        cons={["Minor margin compression offset by massive volume.", "Blue Ocean inevitably turns Red; requiring constant innovation."]} 
+                    />
+                </div>
+
+                {/* Part 4: Key Outcome */}
+                <div className="glass-card no-hover p-8 bg-blue-50/10 mt-8">
+                    <h3 className="title-black text-xl mb-4 text-[#0052CC]">Part 4: Key Outcome</h3>
+                    <p className="text-sm text-text-main mb-3">The "Unlock" strategy focused on full market saturation combined with aggressive pricing to catalyze mass adoption.</p>
+                    <ul className="space-y-3 text-sm text-text-main list-disc pl-4 mt-2">
+                        <li><b className="title-black">Total Coverage:</b> Achieving 100% Starland expansion by Year 48 ensured no regional gaps.</li>
+                        <li><b className="title-black">The Price Unlock:</b> Deliberate drop from $269 to $249 to reach the mass market tipping point.</li>
+                        <li><b className="title-black">Demand Explosion:</b> YoY volume surge of +93%, scaling from 1,886 KU to 3,649 KU.</li>
+                        <li><b className="title-black">Service as a Moat:</b> Bolstered competitive advantage, recovering SPI to a healthy 1,156.</li>
+                    </ul>
+                </div>
+            </div>
+        );
+
+        // ==========================================
+        // CONCLUSION / KEY TAKEAWAYS
+        // ==========================================
+        const ConclusionView = () => {
+            return (
+                <div className="space-y-12 animate-[fadeIn_0.5s_ease-out]">
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-6">
+                            <div className="levitate"><BlueBoxModel /></div>
+                            <div>
+                                <h2 className="text-4xl title-black bg-gradient-text">KEY TAKEAWAYS</h2>
+                                <p className="text-text-main font-medium mt-1">Blue Ocean Strategy Business Game Overview</p>
+                            </div>
+                        </div>
+                        <div className="hidden lg:flex text-sm text-gray-400 items-center gap-2 animate-pulse pr-4">
+                            Scroll to explore
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-nowrap overflow-x-auto no-scrollbar gap-4 pb-8 items-stretch w-full snap-x" style={{ scrollSnapType: 'x mandatory' }}>
+                        <div className="glass-card no-hover p-6 border-t-4 border-t-[#007AFF] min-w-[340px] flex-1 flex flex-col snap-start">
+                            <h3 className="title-black text-xl mb-4">1. Marketing is non-negotiable</h3>
+                            <ul className="text-base text-text-main space-y-3 list-disc pl-5">
+                                <li>Underspending caused share drop (<b className="text-brand-red">21% → 12%</b>).</li>
+                                <li>Recovery required <b className="text-brand-blue">$70M+</b> spend.</li>
+                                <li><b className="title-black">Key:</b> Visibility is critical for Blue Ocean launches.</li>
+                            </ul>
+                        </div>
+
+                        <div className="glass-card no-hover p-6 border-t-4 border-t-[#A855F7] min-w-[340px] flex-1 flex flex-col snap-start">
+                            <h3 className="title-black text-xl mb-4">2. Segment clarity drives decisions</h3>
+                            <ul className="text-base text-text-main space-y-3 list-disc pl-5">
+                                <li>Building exclusively for <b className="title-black">Path 3 & Path 5</b> was our core foundation.</li>
+                                <li><b className="title-black">Key:</b> Investing outside targets led to penalties: <i>"Exceeds market expectations — lost margin without additional sales."</i></li>
+                            </ul>
+                        </div>
+
+                        <div className="glass-card no-hover p-6 border-t-4 border-t-[#34C759] min-w-[340px] flex-1 flex flex-col snap-start">
+                            <h3 className="title-black text-xl mb-4">3. Projects are growth enablers</h3>
+                            <ul className="text-base text-text-main space-y-3 list-disc pl-5">
+                                <li>Projects cut unit cost <b className="text-brand-blue">$177 → $127</b> before Blue Box launched.</li>
+                                <li>Volume COGS reduction dropped it further to <b className="text-brand-blue">$118</b> (<b className="text-brand-blue">-33% unit cost</b>).</li>
+                                <li><b className="title-black">Key:</b> Preparing infrastructure creates sustainable scaling.</li>
+                            </ul>
+                        </div>
+
+                        <div className="glass-card no-hover p-6 border-t-4 border-t-[#FACC15] min-w-[340px] flex-1 flex flex-col snap-start">
+                            <h3 className="title-black text-xl mb-4">4. Differentiate through service</h3>
+                            <ul className="text-base text-text-main space-y-3 list-disc pl-5">
+                                <li>Competitors copied product, dipping SPI <b className="text-brand-red">864 → 793</b>.</li>
+                                <li>Service pivot (Path 4) drove massive recovery <b className="text-brand-blue">793 → 1,156</b>.</li>
+                                <li><b className="title-black">Key:</b> Unit cost stayed controlled at <b className="title-black">$118</b> while perceived value exploded.</li>
+                            </ul>
+                        </div>
+
+                        <div className="glass-card no-hover p-6 border-t-4 border-t-[#FF3B30] min-w-[450px] flex-1 flex flex-col snap-start">
+                            <h3 className="title-black text-xl mb-4">5. Production planning accuracy is a profit lever</h3>
+                            <div className="mb-4 flex-grow w-full">
+                                <DataTable
+                                    columns={["Year", "Plan", "Actual Demand", "Penalty"]}
+                                    data={[
+                                        ["Y44", "900 KU", "345 KU", "$7.5M"],
+                                        ["Y45", "650 KU", "1,013 KU", "$2.7M"],
+                                        ["Y48", "2,730 KU", "3,649 KU", "$13.9M"],
+                                        ["Y49", "5,450 KU", "5,086 KU", "$2.6M"]
+                                    ]}
+                                />
+                            </div>
+                            <p className="text-sm text-text-main font-medium leading-relaxed mt-2">Total Penalty: <b className="text-brand-red">$26.7M</b>. Always base plans on historical demand when motivating growth (price drops, promo).</p>
+                        </div>
+
+                        <div className="glass-card no-hover p-6 border-t-4 border-t-[#00F0FF] min-w-[340px] flex-1 flex flex-col snap-start">
+                            <h3 className="title-black text-xl mb-4">6. Price is a non-customer unlock</h3>
+                            <ul className="text-base text-text-main space-y-3 list-disc pl-5">
+                                <li>Simulation flagged <b className="text-brand-red">"price too high"</b> for 4 years.</li>
+                                <li>Dropping price <b className="text-brand-blue">$269 → $249</b> crossed the psychological threshold.</li>
+                                <li><b className="title-black">Key:</b> Demand jumped <b className="text-brand-blue">1,886 KU → 3,649 KU (+93% YoY)</b>.</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             );
         };
@@ -1095,43 +1310,48 @@
             const [activeTab, setActiveTab] = useState(0);
             const [modalData, setModalData] = useState(null);
             const [yearDetailData, setYearDetailData] = useState(null);
+            const [segmentModalData, setSegmentModalData] = useState(null);
             
-            // Function to handle opening the chart modal
-            const handleOpenChart = (metricKey, title, yearIndices, colorCode) => {
+            const handleOpenChart = (metricKey, title, yearIndices, colorCode, chartType = 'line') => {
                 setModalData({
                     title: title,
                     labels: yearIndices.map(i => METRIC_DATA.labels[i]),
                     values: yearIndices.map(i => METRIC_DATA[metricKey][i]),
-                    color: colorCode
+                    color: colorCode,
+                    type: chartType
                 });
             };
 
-            const handleCloseChart = () => {
+            const handleCloseModals = () => {
                 setModalData(null);
                 setYearDetailData(null);
+                setSegmentModalData(null);
             };
 
             const handleOpenYearDetail = (index) => {
                 setYearDetailData(YEARLY_DETAILS[index]);
             };
 
+            const handleOpenSegment = (roundId) => {
+                setSegmentModalData(roundId);
+            };
+
             const tabs = [
-                { name: "Introduction", component: <IntroView onOpenChart={handleOpenChart} /> },
-                { name: "Red Round", component: <RedRoundView onOpenChart={handleOpenChart} /> },
-                { name: "Blue Round 1", component: <Blue1View onOpenChart={handleOpenChart} /> },
-                { name: "Blue Round 2", component: <Blue2View onOpenChart={handleOpenChart} /> },
-                { name: "Blue Round 3", component: <Blue3View onOpenChart={handleOpenChart} /> },
-                { name: "Conclusion", component: <ConclusionView onOpenYearDetail={handleOpenYearDetail} /> }
+                { name: "Overview", component: <IntroView onOpenChart={handleOpenChart} onOpenYearDetail={handleOpenYearDetail} /> },
+                { name: "Red Round", component: <RedRoundView onOpenChart={handleOpenChart} onOpenSegment={handleOpenSegment} /> },
+                { name: "Blue Round 1", component: <Blue1View onOpenChart={handleOpenChart} onOpenSegment={handleOpenSegment} /> },
+                { name: "Blue Round 2", component: <Blue2View onOpenChart={handleOpenChart} onOpenSegment={handleOpenSegment} /> },
+                { name: "Blue Round 3", component: <Blue3View onOpenChart={handleOpenChart} onOpenSegment={handleOpenSegment} /> },
+                { name: "Conclusion", component: <ConclusionView /> }
             ];
 
             return (
                 <div className="min-h-screen py-10 px-4 sm:px-8 max-w-7xl mx-auto flex flex-col overflow-hidden">
-                    {/* Header: Pure Glassmorphism */}
+                    {/* Header */}
                     <header className="flex flex-col xl:flex-row items-center justify-between mb-12 glass-card no-hover p-6 z-20 relative gap-6">
                         <div className="flex items-center gap-6 mb-6 xl:mb-0">
                             <div className="levitate flex-shrink-0"><BlueBuddiesLogo className="w-16 h-16" /></div>
                             <div className="flex-shrink-0 max-w-full overflow-hidden">
-                                {/* Title locked to a single line using whitespace-nowrap */}
                                 <h1 className="text-3xl md:text-4xl title-black bg-gradient-text tracking-tight whitespace-nowrap">Blue Buddies - Group 19</h1>
                                 <p className="text-text-main text-sm font-medium tracking-wide uppercase mt-1">BOSS Presentation</p>
                             </div>
@@ -1139,12 +1359,11 @@
                         
                         {/* Navigation Area */}
                         <div className="flex flex-col items-center xl:items-end w-full xl:w-auto">
-                            {/* Main Navigation (4 fixed tabs) - Forced nowrap & Center Aligned */}
                             <nav className="flex flex-nowrap justify-center gap-2 md:gap-4 overflow-x-auto w-full pb-2 xl:pb-0 no-scrollbar items-center">
                                 <button 
                                     onClick={() => setActiveTab(0)}
                                     className={`px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 whitespace-nowrap flex-shrink-0 ${activeTab === 0 ? 'bg-[#1A1A1A] text-white shadow-lg' : 'bg-white/50 text-[#4A4A4A] hover:bg-white/80 border border-white'}`}
-                                >Introduction</button>
+                                >Overview</button>
                                 <button 
                                     onClick={() => setActiveTab(1)}
                                     className={`px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 whitespace-nowrap flex-shrink-0 ${activeTab === 1 ? 'bg-[#1A1A1A] text-white shadow-lg' : 'bg-white/50 text-[#4A4A4A] hover:bg-white/80 border border-white'}`}
@@ -1159,8 +1378,7 @@
                                 >Conclusion</button>
                             </nav>
 
-                            {/* Sub-Navigation for Blue Round */}
-                            <div className={`transition-all duration-500 overflow-hidden flex justify-center w-full ${activeTab >= 2 && activeTab <= 4 ? 'max-h-12 opacity-100 mt-2' : 'max-h-0 opacity-0 mt-0'}`}>
+                            <div className={`transition-all duration-500 overflow-hidden flex justify-center w-full ${activeTab >= 2 && activeTab <= 4 ? 'max-h-12 opacity-100 mt-3' : 'max-h-0 opacity-0 mt-0'}`}>
                                 <nav className="flex flex-nowrap gap-2 justify-center overflow-x-auto no-scrollbar">
                                     <button 
                                         onClick={() => setActiveTab(2)}
@@ -1179,10 +1397,15 @@
                         </div>
                     </header>
 
-                    {/* Main Content Area */}
+                    {/* Main Content */}
                     <main className="transition-all duration-500 z-10 relative flex-grow">
                         {tabs[activeTab].component}
                     </main>
+                    
+                    {/* Modals */}
+                    <ChartModal isOpen={!!modalData} onClose={handleCloseModals} data={modalData} />
+                    <YearDetailModal isOpen={!!yearDetailData} onClose={handleCloseModals} yearData={yearDetailData} />
+                    <SegmentStrategyModal isOpen={!!segmentModalData} onClose={handleCloseModals} roundId={segmentModalData} />
                     
                     <footer className="mt-20 text-center text-sm text-text-main pb-8 z-10 relative">
                         <div className="inline-block text-center opacity-80 border-t border-gray-200/60 pt-4 mt-2 text-xs">
@@ -1191,12 +1414,6 @@
                             <p><strong className="title-black">Group 19 - Germany:</strong> Yen NGUYEN - Phuong LUU - Nguyen LE - Ha NGUYEN</p>
                         </div>
                     </footer>
-
-                    {/* Global Chart Modal */}
-                    <ChartModal isOpen={!!modalData} onClose={handleCloseChart} data={modalData} />
-
-                    {/* Global Yearly Detail Modal */}
-                    <YearDetailModal isOpen={!!yearDetailData} onClose={handleCloseChart} yearData={yearDetailData} />
                 </div>
             );
         };
