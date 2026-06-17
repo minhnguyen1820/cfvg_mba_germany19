@@ -107,7 +107,6 @@
     </style>
 
     <!-- React & ReactDOM -->
-    <!-- Updated Babel import to avoid "Cannot use import statement outside a module" error -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone@7.24.4/babel.min.js"></script>
@@ -121,7 +120,7 @@
 
     <div id="root"></div>
 
-    <script type="text/babel" data-type="module">
+    <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
         // ==========================================
@@ -241,6 +240,19 @@
             'Y49': [40.4, 18, 18.6, 23]
         };
 
+        const YEARLY_DETAILS = [
+            { year: 'Y40', total: { spi: 1000, rev: '$926M', ms: '22%', ebit: '$366M' }, redBox: { plan: '2200 KU', actual: '2264 KU', penalty: '$0M' }, blueBox: { plan: '-', actual: '-', penalty: '-' }, marketing: '$94M', specs: 'Standard Red Box Specs' },
+            { year: 'Y41', total: { spi: 950, rev: '$903M', ms: '21%', ebit: '$352M' }, redBox: { plan: '2300 KU', actual: '2264 KU', penalty: '$0.3M' }, blueBox: { plan: '-', actual: '-', penalty: '-' }, marketing: '$94M', specs: 'No major changes' },
+            { year: 'Y42', total: { spi: 735, rev: '$617M', ms: '14%', ebit: '$254M' }, redBox: { plan: '2300 KU', actual: '1547 KU', penalty: '$10.2M' }, blueBox: { plan: '-', actual: '-', penalty: '-' }, marketing: '$50M', specs: 'Focus 36+, Cut Graphics/Audio' },
+            { year: 'Y43', total: { spi: 623, rev: '$500M', ms: '12%', ebit: '$152M' }, redBox: { plan: '2100 KU', actual: '1319 KU', penalty: '$14.8M' }, blueBox: { plan: '-', actual: '-', penalty: '-' }, marketing: '$10M (Error)', specs: 'Online Lvl 70, Focus 22-35' },
+            { year: 'Y44', total: { spi: 809, rev: '$773M', ms: '15%', ebit: '$132M' }, redBox: { plan: '550 KU', actual: '508 KU', penalty: '$0.5M' }, blueBox: { plan: '900 KU', actual: '345 KU', penalty: '$7.5M' }, marketing: '$70M+', specs: 'Blue Box Launch (Ease 5, Family 5)' },
+            { year: 'Y45', total: { spi: 864, rev: '$878M', ms: '19%', ebit: '$155M' }, redBox: { plan: '1400 KU', actual: '1410 KU', penalty: '$0M' }, blueBox: { plan: '650 KU', actual: '1013 KU', penalty: '$2.7M' }, marketing: 'Increased for Starland', specs: 'Price Drop $299, Expanded reach' },
+            { year: 'Y46', total: { spi: 811, rev: '$900M', ms: '20%', ebit: '$155M' }, redBox: { plan: '1500 KU', actual: '1582 KU', penalty: '$0.2M' }, blueBox: { plan: '1500 KU', actual: '1359 KU', penalty: '$1.5M' }, marketing: 'Sustained', specs: 'Cut space-saving, Price $269' },
+            { year: 'Y47', total: { spi: 793, rev: '$945M', ms: '20%', ebit: '$158M' }, redBox: { plan: '1100 KU', actual: '1154 KU', penalty: '$0.1M' }, blueBox: { plan: '2000 KU', actual: '1886 KU', penalty: '$1.2M' }, marketing: 'Global expansion', specs: 'Shift focus to Service/Delivery' },
+            { year: 'Y48', total: { spi: 982, rev: '$1355M', ms: '27%', ebit: '$289M' }, redBox: { plan: '800 KU', actual: '850 KU', penalty: '$0.1M' }, blueBox: { plan: '2730 KU', actual: '3649 KU', penalty: '$13.9M' }, marketing: 'Maximized', specs: 'Leadership & Service Center, Trainers' },
+            { year: 'Y49', total: { spi: 1156, rev: '$1758M', ms: '40.4%', ebit: '$401M' }, redBox: { plan: '400 KU', actual: '420 KU', penalty: '$0M' }, blueBox: { plan: '5450 KU', actual: '5086 KU', penalty: '$2.6M' }, marketing: 'Maximized', specs: 'Service Moat Complete, Price $249' }
+        ];
+
         // Indices updated to correctly map full chart line to end of each stage.
         const ROUND_INDICES = {
             intro: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], // Y40 to Y49
@@ -253,40 +265,62 @@
         // ==========================================
         // UI COMPONENTS
         // ==========================================
-        const ChartComponent = ({ type, data, options, id }) => {
+        const ChartComponent = ({ type, data, options, id, onElementClick }) => {
             const chartRef = useRef(null);
             const chartInstance = useRef(null);
 
             useEffect(() => {
                 if (chartInstance.current) chartInstance.current.destroy();
                 const ctx = chartRef.current.getContext('2d');
+                
+                // Deep merge scales properly
+                let mergedScales = type !== 'pie' ? {
+                    y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { color: '#4A4A4A' }, beginAtZero: true },
+                    x: { grid: { display: false }, ticks: { color: '#4A4A4A' } }
+                } : {};
+
+                if (options && options.scales) {
+                    if (options.scales.x) mergedScales.x = { ...mergedScales.x, ...options.scales.x };
+                    if (options.scales.y) mergedScales.y = { ...mergedScales.y, ...options.scales.y };
+                }
+
+                const combinedOptions = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { 
+                            position: 'bottom', 
+                            labels: { 
+                                font: { family: 'Roboto', size: 11 }, 
+                                color: '#4A4A4A',
+                                boxWidth: 12,
+                                padding: 10
+                            } 
+                        } 
+                    },
+                    scales: mergedScales,
+                    layout: type === 'pie' ? { padding: { bottom: 10 } } : {},
+                    onClick: (event, activeElements) => {
+                        if (activeElements.length > 0 && onElementClick) {
+                            onElementClick(activeElements[0].index);
+                        }
+                    },
+                    onHover: (event, chartElement) => {
+                        if (onElementClick) {
+                            event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
+                        }
+                    },
+                    ...options,
+                    scales: mergedScales // override the root scales with our merged object
+                };
+
                 chartInstance.current = new Chart(ctx, {
                     type: type,
                     data: data,
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { 
-                            legend: { 
-                                position: 'bottom', 
-                                labels: { 
-                                    font: { family: 'Roboto', size: 11 }, 
-                                    color: '#4A4A4A',
-                                    boxWidth: 12,
-                                    padding: 10
-                                } 
-                            } 
-                        },
-                        scales: type !== 'pie' ? {
-                            y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { color: '#4A4A4A' }, beginAtZero: false },
-                            x: { grid: { display: false }, ticks: { color: '#4A4A4A' } }
-                        } : {},
-                        layout: type === 'pie' ? { padding: { bottom: 10 } } : {},
-                        ...options
-                    }
+                    options: combinedOptions
                 });
                 return () => { if (chartInstance.current) chartInstance.current.destroy(); };
-            }, [data, type, options]);
+            }, [data, type, options, onElementClick]);
 
             return <div className="w-full h-full min-h-[250px]"><canvas ref={chartRef} id={id}></canvas></div>;
         };
@@ -356,7 +390,7 @@
         );
 
         // ==========================================
-        // MODAL COMPONENT
+        // MODAL COMPONENTS
         // ==========================================
         const ChartModal = ({ isOpen, onClose, data }) => {
             if (!isOpen || !data) return null;
@@ -375,22 +409,115 @@
 
             return (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-                    {/* Glass Backdrop */}
                     <div className="absolute inset-0 bg-white/20 backdrop-blur-md transition-opacity" onClick={onClose}></div>
-                    
-                    {/* Modal Content */}
                     <div className="glass-card no-hover relative z-10 w-full max-w-4xl p-6 sm:p-10 shadow-[0_40px_80px_rgba(0,0,0,0.15)] animate-[fadeIn_0.3s_ease-out]">
                         <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-white/50 rounded-full text-gray-600 hover:text-black hover:bg-white transition-colors">
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                         </button>
-                        
                         <div className="mb-6">
                             <h2 className="text-2xl title-black text-text-title">{data.title}</h2>
                             <p className="text-text-main mt-1 text-sm">Tracking from Initial Milestone (Y40) to End of Stage</p>
                         </div>
-                        
                         <div className="h-80 w-full bg-white/30 rounded-xl p-4 border border-white/50">
                             <ChartComponent type="bar" data={chartConfig} id="popupChart" />
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const YearDetailModal = ({ isOpen, onClose, yearData }) => {
+            if (!isOpen || !yearData) return null;
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+                    <div className="absolute inset-0 bg-white/20 backdrop-blur-md transition-opacity" onClick={onClose}></div>
+                    <div className="glass-card no-hover relative z-10 w-full max-w-4xl p-6 sm:p-8 shadow-[0_40px_80px_rgba(0,0,0,0.15)] animate-[fadeIn_0.3s_ease-out] overflow-y-auto max-h-[90vh]">
+                        <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-white/50 rounded-full text-gray-600 hover:text-black hover:bg-white transition-colors">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                        
+                        <div className="mb-6 border-b border-gray-200/50 pb-4">
+                            <h2 className="text-3xl title-black text-brand-blue">Outcome Details: {yearData.year}</h2>
+                            <p className="text-text-main mt-1 font-medium">Total Performance & Independent Product Metrics</p>
+                        </div>
+                        
+                        {/* Total Company Performance */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                            <div className="bg-white/50 p-4 rounded-xl border border-white">
+                                <p className="text-xs text-gray-500 font-bold uppercase mb-1">Share Price Index</p>
+                                <p className="text-2xl title-black text-gray-900">{yearData.total.spi}</p>
+                            </div>
+                            <div className="bg-white/50 p-4 rounded-xl border border-white">
+                                <p className="text-xs text-gray-500 font-bold uppercase mb-1">Total Revenue</p>
+                                <p className="text-2xl title-black text-gray-900">{yearData.total.rev}</p>
+                            </div>
+                            <div className="bg-white/50 p-4 rounded-xl border border-white">
+                                <p className="text-xs text-gray-500 font-bold uppercase mb-1">Total EBIT</p>
+                                <p className="text-2xl title-black text-gray-900">{yearData.total.ebit}</p>
+                            </div>
+                            <div className="bg-white/50 p-4 rounded-xl border border-white">
+                                <p className="text-xs text-gray-500 font-bold uppercase mb-1">Market Share</p>
+                                <p className="text-2xl title-black text-gray-900">{yearData.total.ms}</p>
+                            </div>
+                        </div>
+
+                        {/* Red Box vs Blue Box Separation */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            {/* Red Box */}
+                            <div className="bg-red-50/30 p-5 rounded-xl border border-red-100/50 relative overflow-hidden">
+                                <div className="absolute -right-4 -top-4 opacity-10 pointer-events-none"><RedBoxModel /></div>
+                                <h4 className="title-black text-brand-red mb-4 border-b border-red-200 pb-2">🔴 Red Box Operations</h4>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm font-medium text-gray-600">Actual Sales (Demand)</span>
+                                        <span className="font-bold text-gray-900">{yearData.redBox.actual}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm font-medium text-gray-600">Planned Production</span>
+                                        <span className="font-bold text-gray-900">{yearData.redBox.plan}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center bg-red-100/40 p-2 rounded-lg mt-1">
+                                        <span className="text-sm font-bold text-brand-red">Penalty (Gap)</span>
+                                        <span className="font-black text-brand-red">{yearData.redBox.penalty}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Blue Box */}
+                            <div className="bg-blue-50/30 p-5 rounded-xl border border-blue-100/50 relative overflow-hidden">
+                                <div className="absolute -right-4 -top-4 opacity-10 pointer-events-none" style={{transform: 'scale(0.8)'}}><BlueBoxModel /></div>
+                                <h4 className="title-black text-brand-blue mb-4 border-b border-blue-200 pb-2">🔵 Blue Box Operations</h4>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm font-medium text-gray-600">Actual Sales (Demand)</span>
+                                        <span className="font-bold text-gray-900">{yearData.blueBox.actual}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm font-medium text-gray-600">Planned Production</span>
+                                        <span className="font-bold text-gray-900">{yearData.blueBox.plan}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center bg-blue-100/40 p-2 rounded-lg mt-1">
+                                        <span className="text-sm font-bold text-brand-blue">Penalty (Gap)</span>
+                                        <span className="font-black text-brand-blue">{yearData.blueBox.penalty}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Strategy & Budget */}
+                        <div className="bg-white/60 p-5 rounded-xl border border-gray-200/50">
+                            <h4 className="title-black text-gray-800 mb-3">Strategy & Corporate Directives</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="flex flex-col">
+                                    <span className="text-xs font-bold text-gray-500 uppercase mb-1">Marketing Budget</span>
+                                    <span className="font-bold text-gray-900">{yearData.marketing}</span>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-xs font-bold text-gray-500 uppercase mb-1">Specs & Main Action</span>
+                                    <span className="font-bold text-gray-900 text-sm leading-relaxed">{yearData.specs}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -775,7 +902,7 @@
                         <h3 className="title-black text-xl mb-4 text-[#0052CC]">Outcomes & Learning</h3>
                         <ul className="space-y-3 text-sm text-text-main">
                             <li><b className="title-black">Absolute Dominance:</b> #1 unit market share (40.4%). SPI skyrocketed to 1,156.</li>
-                            <li><b className="title-black">Moat Built:</b> By investing in Service, competitors with only product-clones couldn't match the holistic customer experience.</li>
+                            <li><b className="title-black">Moat Built:</b> By investing in Service, competitors với chỉ sản phẩm mô phỏng (product-clones) couldn't match the holistic customer experience.</li>
                             <li><b className="title-black">Profit Machine:</b> Unit cost stabilized at $118 while volume hit 5.08M units. Total EBIT hit $401M.</li>
                             <li className="mt-4 pt-3 border-t border-blue-200/50"><b className="text-text-title">Ultimate Lesson:</b> Blue Oceans are temporary. You must continuously innovate—moving from Product to Service/Delivery—to keep competitors irrelevant.</li>
                         </ul>
@@ -804,76 +931,162 @@
         // ==========================================
         // NEW TAB: CONCLUSION / KEY TAKEAWAYS
         // ==========================================
-        const ConclusionView = () => (
-            <div className="space-y-8 animate-[fadeIn_0.5s_ease-out]">
-                <div className="flex items-center justify-between mb-8">
-                    <div className="flex items-center gap-6">
-                        <div className="levitate"><BlueBoxModel /></div>
-                        <div>
-                            <h2 className="text-4xl title-black bg-gradient-text">KEY TAKEAWAYS</h2>
-                            <p className="text-text-main font-medium mt-1">Blue Ocean Strategy Business Game Overview</p>
+        const ConclusionView = ({ onOpenYearDetail }) => {
+            
+            const chartConfig = {
+                labels: METRIC_DATA.labels,
+                datasets: [
+                    {
+                        label: 'Red Box (Actual KU)',
+                        data: [2264, 2264, 1547, 1319, 508, 1410, 1582, 1154, 850, 420],
+                        backgroundColor: '#FF3B30',
+                        borderColor: '#DC2626',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        order: 2
+                    },
+                    {
+                        label: 'Red Box (Planned KU)',
+                        data: [2200, 2300, 2300, 2100, 550, 1400, 1500, 1100, 800, 400],
+                        borderColor: '#7F1D1D', // Darker and harder red tone
+                        borderWidth: 3, // Bolder line
+                        borderDash: [6, 4], // Dashed style to represent 'Plan'
+                        pointRadius: 6, // Bigger markers
+                        pointHoverRadius: 8,
+                        pointBackgroundColor: '#FFFFFF', // Contrast dot
+                        pointBorderColor: '#7F1D1D',
+                        pointBorderWidth: 3,
+                        type: 'line',
+                        fill: false,
+                        order: 1 // Ensure line is rendered on top of bars
+                    },
+                    {
+                        label: 'Blue Box (Actual KU)',
+                        data: [0, 0, 0, 0, 345, 1013, 1359, 1886, 3649, 5086],
+                        backgroundColor: '#007AFF',
+                        borderColor: '#0052CC',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        order: 2
+                    },
+                    {
+                        label: 'Blue Box (Planned KU)',
+                        data: [0, 0, 0, 0, 900, 650, 1500, 2000, 2730, 5450],
+                        borderColor: '#1E3A8A', // Darker and harder blue tone
+                        borderWidth: 3, // Bolder line
+                        borderDash: [6, 4], // Dashed style to represent 'Plan'
+                        pointRadius: 6, // Bigger markers
+                        pointHoverRadius: 8,
+                        pointBackgroundColor: '#FFFFFF', // Contrast dot
+                        pointBorderColor: '#1E3A8A',
+                        pointBorderWidth: 3,
+                        type: 'line',
+                        fill: false,
+                        order: 1 // Ensure line is rendered on top of bars
+                    }
+                ]
+            };
+
+            return (
+                <div className="space-y-12 animate-[fadeIn_0.5s_ease-out]">
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-6">
+                            <div className="levitate"><BlueBoxModel /></div>
+                            <div>
+                                <h2 className="text-4xl title-black bg-gradient-text">KEY TAKEAWAYS</h2>
+                                <p className="text-text-main font-medium mt-1">Blue Ocean Strategy Business Game Overview</p>
+                            </div>
+                        </div>
+                        <div className="hidden lg:flex text-sm text-gray-400 items-center gap-2 animate-pulse pr-4">
+                            Scroll to explore
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
                         </div>
                     </div>
-                    <div className="hidden lg:flex text-sm text-gray-400 items-center gap-2 animate-pulse pr-4">
-                        Scroll to explore
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
-                    </div>
-                </div>
 
-                {/* Horizontal Scrolling Row for all 6 items */}
-                <div className="flex flex-nowrap overflow-x-auto no-scrollbar gap-4 pb-8 items-stretch w-full snap-x" style={{ scrollSnapType: 'x mandatory' }}>
-                    
-                    {/* Point 1 */}
-                    <div className="glass-card no-hover p-6 border-t-4 border-t-[#007AFF] min-w-[340px] flex-1 flex flex-col snap-start">
-                        <h3 className="title-black text-lg mb-4">1. Marketing investment is non-negotiable</h3>
-                        <p className="text-sm text-text-main leading-relaxed">Underspending on marketing in the Red Round caused market share to drop from 21% to 12%. Recovery only happened when marketing spend increased to $70K+. In a Blue Ocean launch, if noncustomers don't know your product exists, even the best strategy fails.</p>
+                    {/* Horizontal Scrolling Row for all 6 items */}
+                    <div className="flex flex-nowrap overflow-x-auto no-scrollbar gap-4 pb-8 items-stretch w-full snap-x" style={{ scrollSnapType: 'x mandatory' }}>
+                        
+                        {/* Point 1 */}
+                        <div className="glass-card no-hover p-6 border-t-4 border-t-[#007AFF] min-w-[340px] flex-1 flex flex-col snap-start">
+                            <h3 className="title-black text-lg mb-4">1. Marketing investment is non-negotiable</h3>
+                            <p className="text-sm text-text-main leading-relaxed">Underspending on marketing in the Red Round caused market share to drop from 21% to 12%. Recovery only happened when marketing spend increased to $70K+. In a Blue Ocean launch, if noncustomers don't know your product exists, even the best strategy fails.</p>
+                        </div>
+
+                        {/* Point 2 */}
+                        <div className="glass-card no-hover p-6 border-t-4 border-t-[#A855F7] min-w-[340px] flex-1 flex flex-col snap-start">
+                            <h3 className="title-black text-lg mb-4">2. Segment clarity must drive product decisions</h3>
+                            <p className="text-sm text-text-main leading-relaxed">Clearly identifying what Path 3 (parents) and Path 5 (social adults) wanted — and building exclusively around those needs — was the foundation of Blue Box's success. Every time we invested in factors outside our target segments, the simulation penalized us with "exceeds market expectations — lost margin without additional sales."</p>
+                        </div>
+
+                        {/* Point 3 */}
+                        <div className="glass-card no-hover p-6 border-t-4 border-t-[#34C759] min-w-[340px] flex-1 flex flex-col snap-start">
+                            <h3 className="title-black text-lg mb-4">3. Corporate projects are growth enablers</h3>
+                            <p className="text-sm text-text-main leading-relaxed">Launching cost reduction projects (A, B, D, J) during the Red Round reduced unit cost from $177 to $127 before Blue Box even launched. When combined with production scale-up, volume-based COGS reduction brought unit cost further down to $118 — a 33% total reduction. Preparing infrastructure before expansion creates the conditions for sustainable growth.</p>
+                        </div>
+
+                        {/* Point 4 */}
+                        <div className="glass-card no-hover p-6 border-t-4 border-t-[#FACC15] min-w-[340px] flex-1 flex flex-col snap-start">
+                            <h3 className="title-black text-lg mb-4">4. Differentiate through service, not features</h3>
+                            <p className="text-sm text-text-main leading-relaxed">Year 46-47 competitors copied product, share price dipped 864 to 793. Service pivot (Path 4) drove recovery 793 to 1,156. Unit cost stayed controlled at $118.</p>
+                        </div>
+
+                        {/* Point 5 */}
+                        <div className="glass-card no-hover p-6 border-t-4 border-t-[#FF3B30] min-w-[450px] flex-1 flex flex-col snap-start">
+                            <h3 className="title-black text-lg mb-4">5. Production planning accuracy is a profit lever</h3>
+                            <div className="mb-4 flex-grow w-full">
+                                <DataTable
+                                    columns={["Year", "Plan", "Actual Demand", "Penalty"]}
+                                    highlightCol={3}
+                                    data={[
+                                        ["Y44", "900 KU", "345 KU", "$7.5M"],
+                                        ["Y45", "650 KU", "1,013 KU", "$2.7M"],
+                                        ["Y48", "2,730 KU", "3,649 KU", "$13.9M"],
+                                        ["Y49", "5,450 KU", "5,086 KU", "$2.6M"]
+                                    ]}
+                                />
+                            </div>
+                            <p className="text-sm text-text-main font-medium leading-relaxed mt-2">Total Penalty: $26.7M, total avoidable. Always based on historical of actual demand to plan in production when there’s a motivation to grow (price decrease, salesforce, additional promotion, aftersales service).</p>
+                        </div>
+
+                        {/* Point 6 */}
+                        <div className="glass-card no-hover p-6 border-t-4 border-t-[#00F0FF] min-w-[340px] flex-1 flex flex-col snap-start">
+                            <h3 className="title-black text-lg mb-4">6. Price is a noncustomer unlock</h3>
+                            <p className="text-sm text-text-main leading-relaxed">The simulation flagged "price too high" for four consecutive years (Y44-Y47) while the team reduced price only gradually. Non-customers have a fixed price threshold, when price dropped from $269 to $249 in Year 48, demand jumped from 1,886 KU to 3,649 KU (+93% YoY). In Blue Ocean, price doesn't just affect margin, it determines whether the mass of noncustomers will cross the threshold and buy.</p>
+                        </div>
+
                     </div>
 
-                    {/* Point 2 */}
-                    <div className="glass-card no-hover p-6 border-t-4 border-t-[#A855F7] min-w-[340px] flex-1 flex flex-col snap-start">
-                        <h3 className="title-black text-lg mb-4">2. Segment clarity must drive product decisions</h3>
-                        <p className="text-sm text-text-main leading-relaxed">Clearly identifying what Path 3 (parents) and Path 5 (social adults) wanted — and building exclusively around those needs — was the foundation of Blue Box's success. Every time we invested in factors outside our target segments, the simulation penalized us with "exceeds market expectations — lost margin without additional sales."</p>
-                    </div>
-
-                    {/* Point 3 */}
-                    <div className="glass-card no-hover p-6 border-t-4 border-t-[#34C759] min-w-[340px] flex-1 flex flex-col snap-start">
-                        <h3 className="title-black text-lg mb-4">3. Corporate projects are growth enablers</h3>
-                        <p className="text-sm text-text-main leading-relaxed">Launching cost reduction projects (A, B, D, J) during the Red Round reduced unit cost from $177 to $127 before Blue Box even launched. When combined with production scale-up, volume-based COGS reduction brought unit cost further down to $118 — a 33% total reduction. Preparing infrastructure before expansion creates the conditions for sustainable growth.</p>
-                    </div>
-
-                    {/* Point 4 */}
-                    <div className="glass-card no-hover p-6 border-t-4 border-t-[#FACC15] min-w-[340px] flex-1 flex flex-col snap-start">
-                        <h3 className="title-black text-lg mb-4">4. Differentiate through service, not features</h3>
-                        <p className="text-sm text-text-main leading-relaxed">Year 46-47 competitors copied product, share price dipped 864 to 793. Service pivot (Path 4) drove recovery 793 to 1,156. Unit cost stayed controlled at $118.</p>
-                    </div>
-
-                    {/* Point 5 */}
-                    <div className="glass-card no-hover p-6 border-t-4 border-t-[#FF3B30] min-w-[450px] flex-1 flex flex-col snap-start">
-                        <h3 className="title-black text-lg mb-4">5. Production planning accuracy is a profit lever</h3>
-                        <div className="mb-4 flex-grow w-full">
-                            <DataTable
-                                columns={["Year", "Plan", "Actual Demand", "Penalty"]}
-                                highlightCol={3}
-                                data={[
-                                    ["Y44", "900 KU", "345 KU", "$7.5M"],
-                                    ["Y45", "650 KU", "1,013 KU", "$2.7M"],
-                                    ["Y48", "2,730 KU", "3,649 KU", "$13.9M"],
-                                    ["Y49", "5,450 KU", "5,086 KU", "$2.6M"]
-                                ]}
+                    {/* New Interactive Bar Chart Section */}
+                    <div className="glass-card no-hover p-8 border-t border-gray-200/50 mt-10">
+                        <SectionHeader 
+                            title="Product Volumes Overview (Y40 - Y49)" 
+                            subtitle="Click on any column below to view detailed split metrics (Red vs Blue Box) and strategy." 
+                        />
+                        <div className="h-80 w-full relative group cursor-pointer">
+                            <ChartComponent 
+                                type="bar" 
+                                data={chartConfig} 
+                                id="planVsActualChart"
+                                options={{
+                                    scales: {
+                                        x: { stacked: true },
+                                        y: { stacked: true }
+                                    }
+                                }}
+                                onElementClick={(index) => onOpenYearDetail(index)} 
                             />
+                            {/* Hover overlay hint */}
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                                <div className="bg-white/80 backdrop-blur-sm text-gray-800 font-bold px-4 py-2 rounded-full shadow-lg border border-white">
+                                    Click bars for yearly split details
+                                </div>
+                            </div>
                         </div>
-                        <p className="text-sm text-text-main font-medium leading-relaxed mt-2">Total Penalty: $26.7M, total avoidable. Always based on historical of actual demand to plan in production when there’s a motivation to grow (price decrease, salesforce, additional promotion, aftersales service).</p>
-                    </div>
-
-                    {/* Point 6 */}
-                    <div className="glass-card no-hover p-6 border-t-4 border-t-[#00F0FF] min-w-[340px] flex-1 flex flex-col snap-start">
-                        <h3 className="title-black text-lg mb-4">6. Price is a noncustomer unlock</h3>
-                        <p className="text-sm text-text-main leading-relaxed">The simulation flagged "price too high" for four consecutive years (Y44-Y47) while the team reduced price only gradually. Non-customers have a fixed price threshold, when price dropped from $269 to $249 in Year 48, demand jumped from 1,886 KU to 3,649 KU (+93% YoY). In Blue Ocean, price doesn't just affect margin, it determines whether the mass of noncustomers will cross the threshold and buy.</p>
                     </div>
 
                 </div>
-            </div>
-        );
+            );
+        };
 
         // ==========================================
         // MAIN APP
@@ -881,6 +1094,7 @@
         const App = () => {
             const [activeTab, setActiveTab] = useState(0);
             const [modalData, setModalData] = useState(null);
+            const [yearDetailData, setYearDetailData] = useState(null);
             
             // Function to handle opening the chart modal
             const handleOpenChart = (metricKey, title, yearIndices, colorCode) => {
@@ -892,7 +1106,14 @@
                 });
             };
 
-            const handleCloseChart = () => setModalData(null);
+            const handleCloseChart = () => {
+                setModalData(null);
+                setYearDetailData(null);
+            };
+
+            const handleOpenYearDetail = (index) => {
+                setYearDetailData(YEARLY_DETAILS[index]);
+            };
 
             const tabs = [
                 { name: "Introduction", component: <IntroView onOpenChart={handleOpenChart} /> },
@@ -900,7 +1121,7 @@
                 { name: "Blue Round 1", component: <Blue1View onOpenChart={handleOpenChart} /> },
                 { name: "Blue Round 2", component: <Blue2View onOpenChart={handleOpenChart} /> },
                 { name: "Blue Round 3", component: <Blue3View onOpenChart={handleOpenChart} /> },
-                { name: "Conclusion", component: <ConclusionView /> }
+                { name: "Conclusion", component: <ConclusionView onOpenYearDetail={handleOpenYearDetail} /> }
             ];
 
             return (
@@ -973,6 +1194,9 @@
 
                     {/* Global Chart Modal */}
                     <ChartModal isOpen={!!modalData} onClose={handleCloseChart} data={modalData} />
+
+                    {/* Global Yearly Detail Modal */}
+                    <YearDetailModal isOpen={!!yearDetailData} onClose={handleCloseChart} yearData={yearDetailData} />
                 </div>
             );
         };
