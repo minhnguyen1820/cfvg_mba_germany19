@@ -107,9 +107,10 @@
     </style>
 
     <!-- React & ReactDOM -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Updated Babel import to avoid "Cannot use import statement outside a module" error -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.24.4/babel.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -120,7 +121,7 @@
 
     <div id="root"></div>
 
-    <script type="text/babel">
+    <script type="text/babel" data-type="module">
         const { useState, useEffect, useRef } = React;
 
         // ==========================================
@@ -240,6 +241,7 @@
             'Y49': [40.4, 18, 18.6, 23]
         };
 
+        // Indices updated to correctly map full chart line to end of each stage.
         const ROUND_INDICES = {
             intro: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], // Y40 to Y49
             red: [0, 1, 2, 3],                     // Y40 to Y43
@@ -904,8 +906,8 @@
             return (
                 <div className="min-h-screen py-10 px-4 sm:px-8 max-w-7xl mx-auto flex flex-col overflow-hidden">
                     {/* Header: Pure Glassmorphism */}
-                    <header className="flex flex-col items-center justify-center mb-12 glass-card no-hover p-6 md:p-8 z-20 relative gap-6">
-                        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-center sm:text-left">
+                    <header className="flex flex-col xl:flex-row items-center justify-between mb-12 glass-card no-hover p-6 z-20 relative gap-6">
+                        <div className="flex items-center gap-6 mb-6 xl:mb-0">
                             <div className="levitate flex-shrink-0"><BlueBuddiesLogo className="w-16 h-16" /></div>
                             <div className="flex-shrink-0 max-w-full overflow-hidden">
                                 {/* Title locked to a single line using whitespace-nowrap */}
@@ -915,9 +917,9 @@
                         </div>
                         
                         {/* Navigation Area */}
-                        <div className="flex flex-col items-center w-full">
+                        <div className="flex flex-col items-center xl:items-end w-full xl:w-auto">
                             {/* Main Navigation (4 fixed tabs) - Forced nowrap & Center Aligned */}
-                            <nav className="flex flex-nowrap justify-center gap-2 md:gap-4 overflow-x-auto w-full pb-2 md:pb-0 no-scrollbar items-center">
+                            <nav className="flex flex-nowrap justify-center gap-2 md:gap-4 overflow-x-auto w-full pb-2 xl:pb-0 no-scrollbar items-center">
                                 <button 
                                     onClick={() => setActiveTab(0)}
                                     className={`px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 whitespace-nowrap flex-shrink-0 ${activeTab === 0 ? 'bg-[#1A1A1A] text-white shadow-lg' : 'bg-white/50 text-[#4A4A4A] hover:bg-white/80 border border-white'}`}
@@ -937,7 +939,7 @@
                             </nav>
 
                             {/* Sub-Navigation for Blue Round */}
-                            <div className={`transition-all duration-500 overflow-hidden flex justify-center w-full ${activeTab >= 2 && activeTab <= 4 ? 'max-h-12 opacity-100 mt-3' : 'max-h-0 opacity-0 mt-0'}`}>
+                            <div className={`transition-all duration-500 overflow-hidden flex justify-center w-full ${activeTab >= 2 && activeTab <= 4 ? 'max-h-12 opacity-100 mt-2' : 'max-h-0 opacity-0 mt-0'}`}>
                                 <nav className="flex flex-nowrap gap-2 justify-center overflow-x-auto no-scrollbar">
                                     <button 
                                         onClick={() => setActiveTab(2)}
